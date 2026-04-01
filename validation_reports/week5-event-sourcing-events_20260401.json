@@ -1,0 +1,139 @@
+{
+  "report_id": "1bccc956f12442ffac9e074fd4469eb1",
+  "contract_id": "week5-event-sourcing-events",
+  "snapshot_id": "d66f788258afd29b4ef51a743e4749fd5f1313c73d60e3edec54d915130853c7",
+  "run_timestamp": "2026-04-01T19:47:42Z",
+  "total_checks": 10,
+  "passed": 9,
+  "failed": 1,
+  "warned": 0,
+  "errored": 0,
+  "results": [
+    {
+      "check_id": "week5.event_id.uuid",
+      "column_name": "event_id",
+      "check_type": "regex",
+      "status": "PASS",
+      "actual_value": "invalid=0",
+      "expected": "pattern=^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$",
+      "severity": "CRITICAL",
+      "records_failing": 0,
+      "sample_failing": [],
+      "message": "value does not match pattern"
+    },
+    {
+      "check_id": "week5.event_type.pascal",
+      "column_name": "event_type",
+      "check_type": "regex",
+      "status": "PASS",
+      "actual_value": "invalid=0",
+      "expected": "pattern=^[A-Z][A-Za-z0-9]*$",
+      "severity": "CRITICAL",
+      "records_failing": 0,
+      "sample_failing": [],
+      "message": "value does not match pattern"
+    },
+    {
+      "check_id": "week5.event_type.registry",
+      "column_name": "event_type",
+      "check_type": "enum",
+      "status": "FAIL",
+      "actual_value": "invalid=291",
+      "expected": "allowed=['AgentInputValidated', 'AgentNodeExecuted', 'AgentOutputWritten', 'AgentSessionCompleted', 'AgentSessionStarted', 'AgentToolCalled', 'ApplicationApproved', 'ApplicationDeclined', 'ApplicationSubmitted', 'ComplianceCheckCompleted', 'ComplianceCheckInitiated', 'ComplianceCheckRequested', 'ComplianceRuleFailed', 'ComplianceRuleNoted', 'ComplianceRulePassed', 'CreditAnalysisCompleted', 'CreditAnalysisRequested', 'CreditRecordOpened', 'DecisionGenerated', 'DecisionRequested', 'DocumentAdded', 'DocumentFormatValidated', 'DocumentUploadRequested', 'DocumentUploaded', 'ExtractedFactsConsumed']",
+      "severity": "HIGH",
+      "records_failing": 291,
+      "sample_failing": [
+        "64f94eac-3ab6-42b0-9eab-28d21312f6c8",
+        "8d063260-4520-4194-8463-024286fb3bbe",
+        "9fa7ab51-deed-4efb-81d1-d72d1980b104",
+        "6ceeaa3d-bdd5-4506-8398-3a2503baca74",
+        "8122ea0d-08f3-4e50-bef0-372c8d1c00c9"
+      ],
+      "message": "value not in allowed set"
+    },
+    {
+      "check_id": "week5.aggregate_id.uuid",
+      "column_name": "aggregate_id",
+      "check_type": "regex",
+      "status": "PASS",
+      "actual_value": "invalid=0",
+      "expected": "pattern=^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$",
+      "severity": "CRITICAL",
+      "records_failing": 0,
+      "sample_failing": [],
+      "message": "value does not match pattern"
+    },
+    {
+      "check_id": "week5.aggregate_type.pascal",
+      "column_name": "aggregate_type",
+      "check_type": "regex",
+      "status": "PASS",
+      "actual_value": "invalid=0",
+      "expected": "pattern=^[A-Z][A-Za-z0-9]*$",
+      "severity": "HIGH",
+      "records_failing": 0,
+      "sample_failing": [],
+      "message": "value does not match pattern"
+    },
+    {
+      "check_id": "week5.sequence.monotonic",
+      "column_name": "sequence_number",
+      "check_type": "monotonic_sequence",
+      "status": "PASS",
+      "actual_value": "invalid_groups=0",
+      "expected": "monotonic no gaps",
+      "severity": "CRITICAL",
+      "records_failing": 0,
+      "sample_failing": [],
+      "message": "sequence numbers are not strictly increasing"
+    },
+    {
+      "check_id": "week5.recorded_at.gte_occurred_at",
+      "column_name": "recorded_at",
+      "check_type": "gte_field",
+      "status": "PASS",
+      "actual_value": "invalid=0",
+      "expected": "recorded_at>=occurred_at",
+      "severity": "CRITICAL",
+      "records_failing": 0,
+      "sample_failing": [],
+      "message": "recorded_at is before occurred_at"
+    },
+    {
+      "check_id": "week5.metadata.correlation_id.uuid",
+      "column_name": "metadata.correlation_id",
+      "check_type": "regex",
+      "status": "PASS",
+      "actual_value": "invalid=0",
+      "expected": "pattern=^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$",
+      "severity": "HIGH",
+      "records_failing": 0,
+      "sample_failing": [],
+      "message": "value does not match pattern"
+    },
+    {
+      "check_id": "week5.metadata.source_service.required",
+      "column_name": "metadata.source_service",
+      "check_type": "required",
+      "status": "PASS",
+      "actual_value": "missing=0",
+      "expected": "required",
+      "severity": "HIGH",
+      "records_failing": 0,
+      "sample_failing": [],
+      "message": "value is required"
+    },
+    {
+      "check_id": "week5.payload.object",
+      "column_name": "payload",
+      "check_type": "type",
+      "status": "PASS",
+      "actual_value": "invalid=0",
+      "expected": "type=object",
+      "severity": "HIGH",
+      "records_failing": 0,
+      "sample_failing": [],
+      "message": "type mismatch"
+    }
+  ]
+}
