@@ -1,0 +1,17 @@
+version: 2
+models:
+- name: week5_events
+  columns:
+  - name: event_id
+    tests:
+    - not_null
+    - unique
+  - name: event_type
+    tests:
+    - not_null
+  - name: aggregate_id
+    tests:
+    - not_null
+  - name: sequence_number
+    tests:
+    - not_null

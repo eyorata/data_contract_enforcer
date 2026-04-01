@@ -1,0 +1,153 @@
+kind: DataContract
+apiVersion: v3.0.0
+id: week5-event-sourcing-events
+primary_key: event_id
+info:
+  title: "Week 5 Event Sourcing \u2014 Event Records"
+  version: 1.0.0
+  owner: week5-team
+  description: One record per event for each aggregate.
+  generated_at: '2026-04-01T17:45:38Z'
+servers:
+  local:
+    type: local
+    path: outputs/week5/events.jsonl
+    format: jsonl
+schema:
+  event_id:
+    type: string
+    format: uuid
+    required: true
+    unique: true
+  event_type:
+    type: string
+    required: true
+  aggregate_id:
+    type: string
+    format: uuid
+    required: true
+  aggregate_type:
+    type: string
+    required: true
+  sequence_number:
+    type: integer
+    required: true
+  payload:
+    type: object
+    required: true
+  metadata:
+    type: object
+    required: true
+    properties:
+      causation_id:
+        type: string
+        nullable: true
+      correlation_id:
+        type: string
+        required: true
+      user_id:
+        type: string
+        required: true
+      source_service:
+        type: string
+        required: true
+  schema_version:
+    type: string
+    required: true
+  occurred_at:
+    type: string
+    format: date-time
+    required: true
+  recorded_at:
+    type: string
+    format: date-time
+    required: true
+quality:
+  engine: custom
+  checks:
+  - id: week5.event_id.uuid
+    column: event_id
+    type: regex
+    pattern: ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$
+    severity: CRITICAL
+  - id: week5.event_type.pascal
+    column: event_type
+    type: regex
+    pattern: ^[A-Z][A-Za-z0-9]*$
+    severity: CRITICAL
+  - id: week5.event_type.registry
+    column: event_type
+    type: enum
+    allowed:
+    - AgentInputValidated
+    - AgentNodeExecuted
+    - AgentOutputWritten
+    - AgentSessionCompleted
+    - AgentSessionStarted
+    - AgentToolCalled
+    - ApplicationApproved
+    - ApplicationDeclined
+    - ApplicationSubmitted
+    - ComplianceCheckCompleted
+    - ComplianceCheckInitiated
+    - ComplianceCheckRequested
+    - ComplianceRuleFailed
+    - ComplianceRuleNoted
+    - ComplianceRulePassed
+    - CreditAnalysisCompleted
+    - CreditAnalysisRequested
+    - CreditRecordOpened
+    - DecisionGenerated
+    - DecisionRequested
+    - DocumentAdded
+    - DocumentFormatValidated
+    - DocumentUploadRequested
+    - DocumentUploaded
+    - ExtractedFactsConsumed
+    severity: HIGH
+  - id: week5.aggregate_id.uuid
+    column: aggregate_id
+    type: regex
+    pattern: ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$
+    severity: CRITICAL
+  - id: week5.aggregate_type.pascal
+    column: aggregate_type
+    type: regex
+    pattern: ^[A-Z][A-Za-z0-9]*$
+    severity: HIGH
+  - id: week5.sequence.monotonic
+    column: sequence_number
+    type: monotonic_sequence
+    group_by: aggregate_id
+    severity: CRITICAL
+  - id: week5.recorded_at.gte_occurred_at
+    column: recorded_at
+    type: gte_field
+    other_column: occurred_at
+    severity: CRITICAL
+  - id: week5.metadata.correlation_id.uuid
+    column: metadata.correlation_id
+    type: regex
+    pattern: ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$
+    severity: HIGH
+  - id: week5.metadata.source_service.required
+    column: metadata.source_service
+    type: required
+    severity: HIGH
+  - id: week5.payload.object
+    column: payload
+    type: type
+    expected_type: object
+    severity: HIGH
+lineage:
+  upstream: []
+  downstream:
+  - id: week7-schema-contract
+    description: Week 7 enforcer validates event payload schemas.
+    fields_consumed:
+    - event_type
+    - payload
+    - schema_version
+    breaking_if_changed:
+    - event_type
+    - payload

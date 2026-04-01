@@ -1,0 +1,149 @@
+kind: DataContract
+apiVersion: v3.0.0
+id: week3-document-refinery-extractions
+primary_key: doc_id
+info:
+  title: "Week 3 Document Refinery \u2014 Extraction Records"
+  version: 1.0.0
+  owner: week3-team
+  description: One record per processed document with extracted facts and entities.
+  generated_at: '2026-04-01T17:45:33Z'
+servers:
+  local:
+    type: local
+    path: outputs/week3/extractions.jsonl
+    format: jsonl
+schema:
+  doc_id:
+    type: string
+    format: uuid
+    required: true
+    unique: true
+  source_path:
+    type: string
+    required: true
+  source_hash:
+    type: string
+    pattern: ^[a-f0-9]{64}$
+    required: true
+  extracted_facts:
+    type: array
+    min_items: 1
+    items:
+      fact_id:
+        type: string
+        format: uuid
+        required: true
+      confidence:
+        type: number
+        minimum: 0.0
+        maximum: 1.0
+        required: true
+      entity_refs:
+        type: array
+  entities:
+    type: array
+    items:
+      entity_id:
+        type: string
+        format: uuid
+        required: true
+      type:
+        type: string
+        enum:
+        - PERSON
+        - ORG
+        - LOCATION
+        - DATE
+        - AMOUNT
+        - OTHER
+        required: true
+  extraction_model:
+    type: string
+    required: true
+  processing_time_ms:
+    type: integer
+    minimum: 1
+    required: true
+  token_count:
+    type: object
+  extracted_at:
+    type: string
+    format: date-time
+    required: true
+quality:
+  engine: custom
+  checks:
+  - id: week3.doc_id.required
+    column: doc_id
+    type: required
+    severity: CRITICAL
+  - id: week3.doc_id.uuid
+    column: doc_id
+    type: regex
+    pattern: ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$
+    severity: CRITICAL
+  - id: week3.source_hash.sha256
+    column: source_hash
+    type: regex
+    pattern: ^[a-f0-9]{64}$
+    severity: CRITICAL
+  - id: week3.extracted_facts.non_empty
+    column: extracted_facts
+    type: min_items
+    min_items: 1
+    severity: CRITICAL
+  - id: week3.extracted_facts.confidence.range
+    column: extracted_facts[*].confidence
+    type: range
+    min: 0.0
+    max: 1.0
+    severity: CRITICAL
+    observed:
+      min: 0.8250199039555977
+      max: 0.9934669496204055
+      mean: 0.905219
+  - id: week3.entities.type.enum
+    column: entities[*].type
+    type: enum
+    allowed:
+    - PERSON
+    - ORG
+    - LOCATION
+    - DATE
+    - AMOUNT
+    - OTHER
+    severity: CRITICAL
+    observed_unique:
+    - DATE
+    - LOCATION
+    - PERSON
+  - id: week3.entity_refs.in_entities
+    column: extracted_facts[*].entity_refs
+    type: relation_in_set
+    set_column: entities[*].entity_id
+    severity: HIGH
+  - id: week3.processing_time.positive
+    column: processing_time_ms
+    type: range
+    min: 1
+    severity: HIGH
+    observed:
+      min: 85557
+      max: 343487
+  - id: week3.extracted_at.iso8601
+    column: extracted_at
+    type: iso8601
+    severity: HIGH
+lineage:
+  upstream: []
+  downstream:
+  - id: week4-cartographer
+    description: Cartographer ingests doc_id and extracted_facts as node metadata.
+    fields_consumed:
+    - doc_id
+    - extracted_facts
+    - extraction_model
+    breaking_if_changed:
+    - extracted_facts.confidence
+    - doc_id

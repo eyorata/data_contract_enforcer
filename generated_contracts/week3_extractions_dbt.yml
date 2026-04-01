@@ -1,0 +1,14 @@
+version: 2
+models:
+- name: week3_extractions
+  columns:
+  - name: doc_id
+    tests:
+    - not_null
+    - unique
+  - name: source_hash
+    tests:
+    - not_null
+  - name: extracted_at
+    tests:
+    - not_null
