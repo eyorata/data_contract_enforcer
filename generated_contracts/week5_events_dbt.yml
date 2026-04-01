@@ -1,17 +1,95 @@
 version: 2
 models:
 - name: week5_events
+  description: "Week 5 Event Sourcing — Event Records. One record per event for each aggregate."
   columns:
   - name: event_id
+    description: "Unique event identifier (UUID)"
     tests:
     - not_null
     - unique
+    - dbt_expectations.expect_column_values_to_match_regex:
+        regex: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
   - name: event_type
+    description: "PascalCase event type name"
     tests:
     - not_null
+    - accepted_values:
+        values:
+        - AgentInputValidated
+        - AgentNodeExecuted
+        - AgentOutputWritten
+        - AgentSessionCompleted
+        - AgentSessionStarted
+        - AgentToolCalled
+        - ApplicationApproved
+        - ApplicationDeclined
+        - ApplicationSubmitted
+        - ComplianceCheckCompleted
+        - ComplianceCheckInitiated
+        - ComplianceCheckRequested
+        - ComplianceRuleFailed
+        - ComplianceRuleNoted
+        - ComplianceRulePassed
+        - CreditAnalysisCompleted
+        - CreditAnalysisRequested
+        - CreditRecordOpened
+        - DecisionGenerated
+        - DecisionRequested
+        - DocumentAdded
+        - DocumentFormatValidated
+        - DocumentUploadRequested
+        - DocumentUploaded
+        - ExtractedFactsConsumed
+    - dbt_expectations.expect_column_values_to_match_regex:
+        regex: "^[A-Z][A-Za-z0-9]*$"
   - name: aggregate_id
+    description: "UUID of the aggregate this event belongs to"
     tests:
     - not_null
+    - dbt_expectations.expect_column_values_to_match_regex:
+        regex: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+  - name: aggregate_type
+    description: "PascalCase aggregate type name"
+    tests:
+    - not_null
+    - dbt_expectations.expect_column_values_to_match_regex:
+        regex: "^[A-Z][A-Za-z0-9]*$"
   - name: sequence_number
+    description: "Monotonically increasing sequence number per aggregate"
     tests:
     - not_null
+  - name: payload
+    description: "Event payload object"
+    tests:
+    - not_null
+  - name: metadata_correlation_id
+    description: "Correlation ID from metadata (flattened)"
+    tests:
+    - not_null
+    - dbt_expectations.expect_column_values_to_match_regex:
+        regex: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+  - name: metadata_user_id
+    description: "User ID from metadata (flattened)"
+    tests:
+    - not_null
+  - name: metadata_source_service
+    description: "Source service from metadata (flattened)"
+    tests:
+    - not_null
+  - name: schema_version
+    description: "Schema version string"
+    tests:
+    - not_null
+  - name: occurred_at
+    description: "ISO-8601 timestamp when the event occurred"
+    tests:
+    - not_null
+  - name: recorded_at
+    description: "ISO-8601 timestamp when the event was recorded (must be >= occurred_at)"
+    tests:
+    - not_null
+    - dbt_expectations.expect_column_pair_values_A_to_be_greater_than_B:
+        column_A: recorded_at
+        column_B: occurred_at
+        or_equal: true

@@ -356,20 +356,75 @@ def main():
     records = load_jsonl(source)
     lower = os.path.basename(source).lower()
 
+    uuid_regex = "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+
     if "extractions" in lower:
         contract, base_name = week3_contract(source, records)
+        entity_types = sorted({ent.get("type") for r in records for ent in r.get("entities", []) if ent.get("type")})
         dbt_columns = [
-            {"name": "doc_id", "tests": ["not_null", "unique"]},
-            {"name": "source_hash", "tests": ["not_null"]},
+            {"name": "doc_id", "tests": [
+                "not_null", "unique",
+                {"dbt_expectations.expect_column_values_to_match_regex": {"regex": uuid_regex}},
+            ]},
+            {"name": "source_path", "tests": ["not_null"]},
+            {"name": "source_hash", "tests": [
+                "not_null",
+                {"dbt_expectations.expect_column_values_to_match_regex": {"regex": "^[a-f0-9]{64}$"}},
+            ]},
+            {"name": "extracted_facts", "tests": [
+                "not_null",
+                "dbt_expectations.expect_column_values_to_not_be_null",
+            ]},
+            {"name": "extracted_facts_confidence", "description": "Confidence score (flattened)", "tests": [
+                {"dbt_expectations.expect_column_values_to_be_between": {"min_value": 0.0, "max_value": 1.0}},
+            ]},
+            {"name": "entities_type", "description": "Entity type (flattened)", "tests": [
+                {"accepted_values": {"values": entity_types if entity_types else ["PERSON", "ORG", "LOCATION", "DATE", "AMOUNT", "OTHER"]}},
+            ]},
+            {"name": "extraction_model", "tests": ["not_null"]},
+            {"name": "processing_time_ms", "tests": [
+                "not_null",
+                {"dbt_expectations.expect_column_values_to_be_between": {"min_value": 1}},
+            ]},
             {"name": "extracted_at", "tests": ["not_null"]},
         ]
     elif "events" in lower:
         contract, base_name = week5_contract(source, records)
+        registry = sorted({r.get("event_type") for r in records if r.get("event_type")})[:25]
         dbt_columns = [
-            {"name": "event_id", "tests": ["not_null", "unique"]},
-            {"name": "event_type", "tests": ["not_null"]},
-            {"name": "aggregate_id", "tests": ["not_null"]},
+            {"name": "event_id", "tests": [
+                "not_null", "unique",
+                {"dbt_expectations.expect_column_values_to_match_regex": {"regex": uuid_regex}},
+            ]},
+            {"name": "event_type", "tests": [
+                "not_null",
+                {"accepted_values": {"values": registry}},
+                {"dbt_expectations.expect_column_values_to_match_regex": {"regex": "^[A-Z][A-Za-z0-9]*$"}},
+            ]},
+            {"name": "aggregate_id", "tests": [
+                "not_null",
+                {"dbt_expectations.expect_column_values_to_match_regex": {"regex": uuid_regex}},
+            ]},
+            {"name": "aggregate_type", "tests": [
+                "not_null",
+                {"dbt_expectations.expect_column_values_to_match_regex": {"regex": "^[A-Z][A-Za-z0-9]*$"}},
+            ]},
             {"name": "sequence_number", "tests": ["not_null"]},
+            {"name": "payload", "tests": ["not_null"]},
+            {"name": "metadata_correlation_id", "description": "Correlation ID (flattened)", "tests": [
+                "not_null",
+                {"dbt_expectations.expect_column_values_to_match_regex": {"regex": uuid_regex}},
+            ]},
+            {"name": "metadata_user_id", "description": "User ID (flattened)", "tests": ["not_null"]},
+            {"name": "metadata_source_service", "description": "Source service (flattened)", "tests": ["not_null"]},
+            {"name": "schema_version", "tests": ["not_null"]},
+            {"name": "occurred_at", "tests": ["not_null"]},
+            {"name": "recorded_at", "tests": [
+                "not_null",
+                {"dbt_expectations.expect_column_pair_values_A_to_be_greater_than_B": {
+                    "column_A": "recorded_at", "column_B": "occurred_at", "or_equal": True,
+                }},
+            ]},
         ]
     else:
         raise ValueError("Unsupported source file. Expected extractions.jsonl or events.jsonl.")
