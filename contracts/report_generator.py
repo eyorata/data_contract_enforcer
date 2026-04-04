@@ -43,7 +43,7 @@ def iso_now():
 
 
 def load_json(path):
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, "r", encoding="utf-8-sig") as f:
         return json.load(f)
 
 
@@ -95,7 +95,11 @@ def load_violation_log(path="violation_log/violations.jsonl"):
     records = []
     with open(path, "r", encoding="utf-8") as f:
         for line in f:
-            line = line.strip()
+            line = line.strip().lstrip("\ufeff")
+            if not line:
+                continue
+            if line.startswith("#"):
+                continue
             if line:
                 records.append(json.loads(line))
     return records
@@ -494,6 +498,12 @@ def build_pdf(output_path):
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(report_data, f, indent=2)
     print(f"Generated data file: {json_path}")
+
+    # Required fixed filename for Sunday submission
+    required_json_path = os.path.join("enforcer_report", "report_data.json")
+    with open(required_json_path, "w", encoding="utf-8") as f:
+        json.dump(report_data, f, indent=2)
+    print(f"Generated data file: {required_json_path}")
 
 
 def main():
