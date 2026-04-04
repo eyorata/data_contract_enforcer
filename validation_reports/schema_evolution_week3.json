@@ -1,0 +1,172 @@
+{
+  "contract_id": "week3-document-refinery-extractions",
+  "generated_at": "2026-04-04T08:24:19Z",
+  "total_changes": 4,
+  "breaking_changes": 4,
+  "compatible_changes": 0,
+  "compatibility_verdict": "BREAKING",
+  "changes": [
+    {
+      "field": "extracted_facts.items.confidence",
+      "change_type": "narrow_type",
+      "old": {
+        "type": "number"
+      },
+      "new": {
+        "type": "integer"
+      },
+      "compatible": false,
+      "action": "CRITICAL. Requires migration plan with rollback. Statistical baseline must be re-established.",
+      "severity": "CRITICAL",
+      "reason": "Numeric scale/type narrowed (e.g., 0.0\u20131.0 to 0\u2013100) \u2014 breaking.",
+      "from_snapshot": "20260404T074352Z",
+      "to_snapshot": "20260404T080000Z"
+    },
+    {
+      "field": "extracted_facts.items.confidence",
+      "change_type": "change_constraint",
+      "old": {
+        "maximum": 1.0
+      },
+      "new": {
+        "maximum": 100
+      },
+      "compatible": false,
+      "action": "Evaluate impact on downstream validation. Notify affected subscribers.",
+      "severity": "CRITICAL",
+      "reason": "Confidence scale change detected (0.0\u20131.0 -> 0\u2013100).",
+      "from_snapshot": "20260404T074352Z",
+      "to_snapshot": "20260404T080000Z"
+    },
+    {
+      "field": "extracted_facts.items.confidence.maximum",
+      "change_type": "change_constraint",
+      "old": 1.0,
+      "new": 100,
+      "compatible": false,
+      "action": "Evaluate impact on downstream validation. Notify affected subscribers.",
+      "from_snapshot": "20260404T074352Z",
+      "to_snapshot": "20260404T080000Z"
+    },
+    {
+      "field": "extracted_facts.items.confidence.type",
+      "change_type": "change_constraint",
+      "old": "number",
+      "new": "integer",
+      "compatible": false,
+      "action": "Evaluate impact on downstream validation. Notify affected subscribers.",
+      "from_snapshot": "20260404T074352Z",
+      "to_snapshot": "20260404T080000Z"
+    }
+  ],
+  "blast_radius": {
+    "affected_subscribers": [
+      {
+        "subscriber_id": "week4-cartographer",
+        "subscriber_team": "week4",
+        "affected_fields": [
+          "extracted_facts.confidence",
+          "extracted_facts.confidence",
+          "extracted_facts.confidence",
+          "extracted_facts.confidence"
+        ],
+        "validation_mode": "ENFORCE",
+        "contact": "week4-team@org.com"
+      },
+      {
+        "subscriber_id": "week7-enforcer",
+        "subscriber_team": "week7",
+        "affected_fields": [
+          "extracted_facts.confidence",
+          "extracted_facts.confidence",
+          "extracted_facts.confidence",
+          "extracted_facts.confidence"
+        ],
+        "validation_mode": "AUDIT",
+        "contact": "week7-team@org.com"
+      }
+    ],
+    "subscriber_count": 2
+  },
+  "consumer_failure_modes": [
+    {
+      "subscriber_id": "week4-cartographer",
+      "field": "extracted_facts.confidence",
+      "failure_mode": "used for node ranking; scale change breaks ranking logic"
+    },
+    {
+      "subscriber_id": "week4-cartographer",
+      "field": "extracted_facts.confidence",
+      "failure_mode": "used for node ranking; scale change breaks ranking logic"
+    },
+    {
+      "subscriber_id": "week4-cartographer",
+      "field": "extracted_facts.confidence",
+      "failure_mode": "used for node ranking; scale change breaks ranking logic"
+    },
+    {
+      "subscriber_id": "week4-cartographer",
+      "field": "extracted_facts.confidence",
+      "failure_mode": "used for node ranking; scale change breaks ranking logic"
+    },
+    {
+      "subscriber_id": "week7-enforcer",
+      "field": "extracted_facts.confidence",
+      "failure_mode": "AI extension embedding drift check baseline depends on confidence scale"
+    },
+    {
+      "subscriber_id": "week7-enforcer",
+      "field": "extracted_facts.confidence",
+      "failure_mode": "AI extension embedding drift check baseline depends on confidence scale"
+    },
+    {
+      "subscriber_id": "week7-enforcer",
+      "field": "extracted_facts.confidence",
+      "failure_mode": "AI extension embedding drift check baseline depends on confidence scale"
+    },
+    {
+      "subscriber_id": "week7-enforcer",
+      "field": "extracted_facts.confidence",
+      "failure_mode": "AI extension embedding drift check baseline depends on confidence scale"
+    }
+  ],
+  "migration_checklist": [
+    {
+      "step": 1,
+      "action": "CRITICAL. Requires migration plan with rollback. Statistical baseline must be re-established.",
+      "field": "extracted_facts.items.confidence",
+      "change_type": "narrow_type"
+    },
+    {
+      "step": 2,
+      "action": "Evaluate impact on downstream validation. Notify affected subscribers.",
+      "field": "extracted_facts.items.confidence",
+      "change_type": "change_constraint"
+    },
+    {
+      "step": 3,
+      "action": "Evaluate impact on downstream validation. Notify affected subscribers.",
+      "field": "extracted_facts.items.confidence.maximum",
+      "change_type": "change_constraint"
+    },
+    {
+      "step": 4,
+      "action": "Evaluate impact on downstream validation. Notify affected subscribers.",
+      "field": "extracted_facts.items.confidence.type",
+      "change_type": "change_constraint"
+    },
+    {
+      "step": 5,
+      "action": "Notify all affected subscribers",
+      "field": "all",
+      "change_type": "notification"
+    },
+    {
+      "step": 6,
+      "action": "Re-run validation after migration",
+      "field": "all",
+      "change_type": "verification"
+    }
+  ],
+  "rollback_plan": "Revert to previous schema snapshot. Restore baseline in schema_snapshots/baselines.json. Notify all subscribers of rollback."
+}

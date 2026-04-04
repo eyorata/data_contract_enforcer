@@ -51,6 +51,19 @@ def append_violation_log(record, path="violation_log/violations.jsonl"):
         f.write(json.dumps(record) + "\n")
 
 
+def load_ai_baseline(path="schema_snapshots/ai_baselines.json"):
+    if not os.path.exists(path):
+        return {}
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def save_ai_baseline(data, path="schema_snapshots/ai_baselines.json"):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2)
+
+
 # ── Extension 1: Embedding Drift Detection ───────────────────────────────────
 
 def embed_texts_local(texts, model_name="all-MiniLM-L6-v2"):
@@ -468,12 +481,18 @@ def main():
     print("\n  Extension 3: LLM Output Schema Violation Rate")
     verdicts = load_jsonl(args.week2_data)
     if verdicts:
+        ai_baselines = load_ai_baseline()
+        baseline_rate = ai_baselines.get("output_schema_violation_rate")
         violation_result = check_output_schema_violation_rate(
-            verdicts
+            verdicts, baseline_rate=baseline_rate
         )
         results.append(violation_result)
         print(f"    Status: {violation_result['status']}, "
               f"Rate: {violation_result['violation_rate']}")
+        # Persist baseline for next run
+        ai_baselines["output_schema_violation_rate"] = violation_result["violation_rate"]
+        ai_baselines["updated_at"] = iso_now()
+        save_ai_baseline(ai_baselines)
     else:
         results.append({
             "check_id": "ai.output_schema_violation_rate",

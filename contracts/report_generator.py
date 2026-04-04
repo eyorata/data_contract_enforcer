@@ -230,6 +230,11 @@ def build_pdf(output_path):
     total_f = sum(r.get("failed", 0) for r in val_reports)
     total_w = sum(r.get("warned", 0) for r in val_reports)
     total_e = sum(r.get("errored", 0) for r in val_reports)
+    if ai_report:
+        total_c += ai_report.get("total_checks", 0)
+        total_p += ai_report.get("passed", 0)
+        total_f += ai_report.get("failed", 0)
+        total_w += ai_report.get("warned", 0)
 
     summary_data = [
         ["Metric", "Value"],

@@ -1,45 +1,56 @@
 {
-  "generated_at": "2026-04-04T07:35:20Z",
-  "health_score": 85.1,
-  "health_narrative": "Data health is good with minor issues. Some non-critical violations detected.",
-  "total_checks": 69,
-  "passed": 61,
-  "failed": 2,
-  "warned": 0,
+  "generated_at": "2026-04-04T08:25:38Z",
+  "health_score": 46.0,
+  "health_narrative": "Data health is critical. Immediate action required on failing contracts.",
+  "total_checks": 86,
+  "passed": 74,
+  "failed": 4,
+  "warned": 2,
   "errors": 0,
   "violations_by_severity": {
+    "CRITICAL": 2,
     "HIGH": 2
   },
   "top_violations": [
+    {
+      "check_id": "week3.extracted_facts.confidence.range",
+      "severity": "CRITICAL",
+      "contract_id": "week3-document-refinery-extractions",
+      "records_failing": 10
+    },
+    {
+      "check_id": "week3-document-refinery-extractions.extracted_facts[*].confidence.drift",
+      "severity": "CRITICAL",
+      "contract_id": "week3-document-refinery-extractions",
+      "records_failing": 0
+    },
     {
       "check_id": "week5.event_type.registry",
       "severity": "HIGH",
       "contract_id": "week5-event-sourcing-events",
       "records_failing": 291
-    },
-    {
-      "check_id": "week1.code_refs.line_order",
-      "severity": "HIGH",
-      "contract_id": "week1-intent-classifier-records",
-      "records_failing": 80
     }
   ],
   "recommended_actions": [
     {
-      "priority": "P1",
-      "action": "Fix week5.event_type.registry: update the producing system to ensure event_type conforms to contract week5-event-sourcing-events clause week5.event_type.registry. Currently 291 records failing."
+      "priority": "P0",
+      "action": "Fix week3.extracted_facts.confidence.range: update `src/week3/extractor.py` so field `extracted_facts[*].confidence` conforms to contract `week3-document-refinery-extractions` clause `week3.extracted_facts.confidence.range`. Currently 10 records failing."
+    },
+    {
+      "priority": "P0",
+      "action": "Fix week3-document-refinery-extractions.extracted_facts[*].confidence.drift: update `src/week3/extractor.py` so field `extracted_facts[*].confidence` conforms to contract `week3-document-refinery-extractions` clause `week3-document-refinery-extractions.extracted_facts[*].confidence.drift`. Currently 0 records failing."
+    },
+    {
+      "priority": "P0",
+      "action": "Address breaking schema change in week3-document-refinery-extractions: 4 breaking change(s) detected. Review migration impact report and notify subscribers."
     },
     {
       "priority": "P1",
-      "action": "Fix week1.code_refs.line_order: update the producing system to ensure code_refs[*].line_end conforms to contract week1-intent-classifier-records clause week1.code_refs.line_order. Currently 80 records failing."
+      "action": "Fix week5.event_type.registry: update `src/week5/event_emitter.py` so field `event_type` conforms to contract `week5-event-sourcing-events` clause `week5.event_type.registry`. Currently 291 records failing."
     },
     {
       "priority": "P1",
       "action": "Investigate ai.trace_error_rate: Error rate: 26.0% (39/150)"
-    },
-    {
-      "priority": "P1",
-      "action": "Investigate ai.trace_latency: Mean latency: 7320.5ms, P95: 14133ms"
     }
   ]
 }

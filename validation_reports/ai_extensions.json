@@ -1,19 +1,20 @@
 {
-  "report_id": "dcc9d8b912674e0fb64010d334219b19",
+  "report_id": "943a13454d584952977db66462878e77",
   "report_type": "ai_extensions",
-  "run_timestamp": "2026-04-04T07:29:02Z",
+  "run_timestamp": "2026-04-04T08:23:30Z",
   "total_checks": 5,
-  "passed": 2,
+  "passed": 3,
   "failed": 0,
   "warned": 2,
   "results": [
     {
       "check_id": "ai.embedding_drift",
-      "status": "BASELINE_SET",
-      "message": "Baseline established from 62 samples",
+      "status": "PASS",
       "drift_score": 0.0,
       "threshold": 0.15,
-      "sample_size": 62
+      "cosine_similarity": 1.0,
+      "sample_size": 62,
+      "message": "Drift=0.0 (threshold=0.15)"
     },
     {
       "check_id": "ai.prompt_input_validation",
@@ -31,7 +32,7 @@
       "total_outputs": 100,
       "schema_violations": 0,
       "violation_rate": 0.0,
-      "trend": "unknown",
+      "trend": "stable",
       "warn_threshold": 0.02,
       "sample_violations": [],
       "message": "Violation rate: 0.0% (0/100)"

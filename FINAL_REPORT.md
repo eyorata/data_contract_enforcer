@@ -8,13 +8,13 @@
 
 **Data Health Score (with calculation)**
 - From `enforcer_report/report_data.json`:
-  - Total checks = **69**
-  - Passed = **61**
-  - Failed = **2**
-  - CRITICAL fails = **0**
-- Calculation: `(61 / 69) × 100 = 88.41`
-  - Adjusted by `20 × CRITICAL fails (0)` → **88.41**
-- Reported score in file: **85.1** (rounded/adjusted per report logic).
+  - Total checks = **86**
+  - Passed = **74**
+  - Failed = **4**
+  - CRITICAL fails = **2**
+- Calculation: `(74 / 86) × 100 = 86.05`
+  - Adjusted by `20 × CRITICAL fails (2)` → **46.05**
+- Reported score in file: **46.0** (rounded).
 
 **Required sections present**
 1. Data Health Score
@@ -24,102 +24,122 @@
 5. Recommended Actions (prioritized)
 
 **Actionability (examples from report output)**
+- “Fix `week3.extracted_facts.confidence.range`: update `src/week3/extractor.py` so field `extracted_facts[*].confidence` conforms to contract `week3-document-refinery-extractions` clause `week3.extracted_facts.confidence.range`.”
 - “Fix `week5.event_type.registry`: update `src/week5/event_emitter.py` so field `event_type` conforms to contract `week5-event-sourcing-events` clause `week5.event_type.registry`.”
-- “Fix `week1.code_refs.line_order`: update `src/week1/classifier.py` so field `code_refs[*].line_end` conforms to contract `week1-intent-classifier-records` clause `week1.code_refs.line_order`.”
 
 ---
 
 ## 2) Validation Run Results (Clause‑Level Summary)
 **Evidence**
+- `validation_reports/violated.json`
 - `validation_reports/week1_20260404.json`
-- `validation_reports/week3_20260404.json`
-- `validation_reports/week4_20260404.json`
 - `validation_reports/week5_20260404.json`
 
-**Failure 1 — Week 1 (HIGH severity)**
-- Check: `week1.code_refs.line_order`
-- Field: `code_refs[*].line_end`
-- Expected: `line_end >= line_start`
-- Actual: **80 records** failing
-- Severity: **HIGH**
-- Plain language: Some code reference ranges are inverted or malformed, which breaks correlation between intents and code.
+**Failure 1 — Week 3 (CRITICAL structural)**
+- Check: `week3.extracted_facts.confidence.range`
+- Field: `extracted_facts[*].confidence`
+- Expected: `min>=0.0, max<=1.0`
+- Actual: **violated data contains 0–100 scale** (10 records failing)
+- Severity: **CRITICAL**
+- Plain language: Confidence values were written in percent, which breaks the 0.0–1.0 contract and corrupts downstream ranking.
 
-**Failure 2 — Week 5 (HIGH severity, from violation log)**
+**Failure 2 — Week 3 (CRITICAL statistical drift)**
+- Check: `week3-document-refinery-extractions.extracted_facts[*].confidence.drift`
+- Field: `extracted_facts[*].confidence`
+- Expected: baseline mean ± 3 stddev
+- Actual: mean shift beyond 3 stddev (baseline mismatch)
+- Severity: **CRITICAL**
+- Plain language: Even if types pass, the distribution shifted sharply, indicating silent corruption.
+
+**Failure 3 — Week 5 (HIGH structural)**
 - Check: `week5.event_type.registry`
 - Field: `event_type`
-- Expected: event_type is registered in schema registry list
-- Actual: **unregistered event types present** (violation log shows 12 affected records)
+- Expected: event_type registered in schema registry list
+- Actual: **unregistered event types present** (291 records failing)
 - Severity: **HIGH**
 
-**Downstream impact**
-- Week 1 failure affects:
-  - Direct: `week3-document-refinery`
-  - Transitive: `week4-cartographer`, `week5-event-sourcing`, and downstream outputs
-- Week 5 failure affects:
+**Downstream impact (named consumers)**
+- Week 3 confidence failures affect:
+  - Direct: `week4-cartographer`, `week5-event-sourcing`
+  - Transitive: `file::outputs/week4/lineage_snapshots.jsonl`, `file::outputs/week5/events.jsonl`
+- Week 5 registry failures affect:
   - Direct: `week7-schema-contract`
-  - Transitive: event consumers relying on the registry
 
 ---
 
 ## 3) Violation Deep‑Dive — Blame Chain + Blast Radius
-**Selected violation:** `week1.code_refs.line_order`
+**Selected violation:** `week3.extracted_facts.confidence.range`
 
 **Failing check**
-- Contract: `week1-intent-classifier-records`
-- Field: `code_refs[*].line_end`
-- Severity: **HIGH**
-- Why: `line_end` is less than `line_start` for 80 records.
+- Contract: `week3-document-refinery-extractions`
+- Field: `extracted_facts[*].confidence`
+- Severity: **CRITICAL**
 
 **Lineage traversal (step‑by‑step)**
-1. Start at failing dataset: `file::outputs/week1/intent_records.jsonl`
+1. Start at failing dataset: `file::outputs/week3/extractions.jsonl`
 2. BFS upstream via lineage `reverse_adj` edges
-3. Upstream producer found: `pipeline::week1-intent-classifier`
-   - Producer file: `src/week1/classifier.py`
+3. Upstream producers found:
+   - `pipeline::week3-document-refinery` → `src/week3/extractor.py`
+   - `pipeline::week1-intent-classifier` → `src/week1/classifier.py`
 
-**Blame chain (from violation log)**
+**Blame chain (ranked candidates)**
 - Rank 1:
+  - Commit: `2954f933009a62c5aaf905b512129b62a7dc92d9`
+  - Author: `eyuel.nebiyu@gmail.com`
+  - File: `src/week3/extractor.py`
+  - Confidence score: **0.8**
+- Rank 2:
+  - Commit: `2954f933009a62c5aaf905b512129b62a7dc92d9`
+  - Author: `eyuel.nebiyu@gmail.com`
   - File: `src/week1/classifier.py`
-  - Commit: `unknown` (no recent commits found in local git log)
-  - Author: `unknown`
-  - Confidence score: **0.1**
+  - Confidence score: **0.4**
+
+**Scoring formula**
+`base = 1.0 − (days_since_commit × 0.1)` and `−0.2 per lineage hop`
 
 **Blast radius**
-- Direct subscriber: `week3-document-refinery`
-- Transitive contamination:
-  - `file::outputs/week3/extractions.jsonl` (depth 1)
-  - `pipeline::week4-cartographer` (depth 2)
+- Direct subscribers:
+  - `week4-cartographer`
+  - `week5-event-sourcing`
+- Transitive contamination (with depth):
+  - `file::outputs/week4/lineage_snapshots.jsonl` (depth 1)
   - `pipeline::week5-event-sourcing` (depth 2)
-  - `file::outputs/week4/lineage_snapshots.jsonl` (depth 3)
   - `file::outputs/week5/events.jsonl` (depth 3)
 
 **Attribution confidence**
-- **Low confidence**, because git log did not return a concrete commit hash.
-- Scoring formula used: `1.0 − (days_since_commit × 0.1) − (0.2 × lineage_hops)`.
+- **Moderate confidence** (recent commit, ranked by formula; multiple lineage hops reduce score).
 
 ---
 
 ## 4) Schema Evolution Case Study
 **Evidence:**
-- `validation_reports/schema_evolution_week3-document-refinery-extractions.json`
-- `validation_reports/schema_evolution_week5-event-sourcing-events.json`
+- `validation_reports/schema_evolution_week3.json`
+- `validation_reports/migration_impact_week3-document-refinery-extractions_20260404.json`
 
-**Result**
-- No changes detected between snapshots.
-- Compatibility verdict: **COMPATIBLE**
-- Migration impact report: not generated (no breaking change).
+**Before/After Diff (human‑readable)**
+- **Before:** `extracted_facts.items.confidence` → type `number`, max `1.0`
+- **After:** `extracted_facts.items.confidence` → type `integer`, max `100`
 
-**Interpretation**
-- This is correct for current data, but to fully demonstrate the taxonomy a **simulated change** (e.g., `confidence` scale change) should be injected.
-- Our analyzer explicitly classifies a 0.0–1.0 → 0–100 scale shift as **CRITICAL breaking** and would generate a migration report + rollback plan.
+**Taxonomy classification**
+- **Narrow type (number → integer)** — **BREAKING, CRITICAL**
+- **Constraint change (max 1.0 → 100)** — **BREAKING, CRITICAL**
 
-**Rollback plan (from analyzer logic)**
-- Revert to previous snapshot.
+**Migration impact (from report)**
+- Affected subscribers:
+  - `week4-cartographer` (ranking logic depends on confidence scale)
+  - `week7-enforcer` (AI drift baselines depend on confidence)
+- Required actions (examples):
+  1. Re‑establish baselines for confidence after migration.
+  2. Notify all subscribers and re‑run validation.
+
+**Rollback plan**
+- Revert to the previous schema snapshot.
 - Restore baselines in `schema_snapshots/baselines.json`.
 - Notify all subscribers of rollback.
 
 **Production comparison**
-- A registry like Confluent would block incompatible schema registration.
-- Our analyzer catches breaking changes post‑hoc and requires a migration + rollback plan.
+- A registry like Confluent would block this at schema registration.
+- Our analyzer catches it post‑hoc and generates a migration + rollback plan.
 
 ---
 
@@ -129,8 +149,8 @@
 **Embedding drift**
 - Drift score: **0.0**
 - Threshold: **0.15**
-- Method: cosine distance between current centroid and baseline centroid
-- Status: **BASELINE_SET** (pass)
+- Method: cosine distance between centroids
+- Status: **PASS**
 
 **Prompt input validation**
 - Total records: **50**
@@ -142,15 +162,14 @@
 - Total outputs: **100**
 - Violations: **0**
 - Violation rate: **0.0%**
-- Trend: **unknown** (single data point)
+- Trend: **stable** (baseline persisted across runs)
 
-**Warnings**
-- Trace error rate: **26.0%** (WARN)
-- Trace latency: **mean 7320.5ms, p95 14133ms** (WARN)
+**Warnings (explain cause)**
+- Trace error rate: **26.0%** (WARN) — likely due to retry/test runs in trace export
+- Trace latency: **mean 7320.5ms, p95 14133ms** (WARN) — suggests slow tool chains or large prompt sizes
 
 **Conclusion**
-- Core AI contract checks pass; operational reliability is degraded (errors + latency).
-- Outputs are structurally valid, but reliability risk suggests monitoring and throttling.
+- AI outputs are structurally valid, but operational reliability is degraded. Monitoring and throttling are recommended.
 
 ---
 
@@ -173,4 +192,4 @@
 
 **Recommendation**
 - Add/tighten clause: `event_type.registry` (contract)
-- Upgrade validation mode for the event stream to **ENFORCE** in `contract_registry/subscriptions.yaml`
+- Upgrade validation mode for event stream to **ENFORCE** in `contract_registry/subscriptions.yaml`

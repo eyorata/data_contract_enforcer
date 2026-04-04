@@ -1,0 +1,62 @@
+doc_id:
+  type: string
+  format: uuid
+  required: true
+  unique: true
+  description: Primary key. UUIDv4. Stable across re-extractions of the same source.
+source_path:
+  type: string
+  required: true
+source_hash:
+  type: string
+  pattern: ^[a-f0-9]{64}$
+  required: true
+  description: SHA-256 of the source file. Changes iff the source content changes.
+extracted_facts:
+  type: array
+  min_items: 1
+  items:
+    fact_id:
+      type: string
+      format: uuid
+      unique: true
+    confidence:
+      type: integer
+      minimum: 0.0
+      maximum: 100
+      required: true
+      description: BREAKING CHANGE if changed to 0-100.
+    entity_refs:
+      type: array
+entities:
+  type: array
+  items:
+    entity_id:
+      type: string
+      format: uuid
+      required: true
+    type:
+      type: string
+      enum:
+      - PERSON
+      - ORG
+      - LOCATION
+      - DATE
+      - AMOUNT
+      - OTHER
+      required: true
+extraction_model:
+  type: string
+  required: true
+  pattern: ^(claude|gpt)-
+  description: Model identifier. Must match pattern claude-* or gpt-*.
+processing_time_ms:
+  type: integer
+  minimum: 1
+  required: true
+token_count:
+  type: object
+extracted_at:
+  type: string
+  format: date-time
+  required: true

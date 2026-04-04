@@ -281,14 +281,31 @@ def classify_field_change(field_name, old_def, new_def):
 
 
 def diff_schemas(old_schema, new_schema):
-    """Diff two schema snapshots and classify all changes."""
-    all_changes = []
-    old_fields = set(old_schema.keys()) if old_schema else set()
-    new_fields = set(new_schema.keys()) if new_schema else set()
+    """Diff two schema snapshots and classify all changes (including nested)."""
+    def flatten_schema(schema, prefix=""):
+        flat = {}
+        if not isinstance(schema, dict):
+            return flat
+        for key, val in schema.items():
+            path = f"{prefix}.{key}" if prefix else key
+            flat[path] = val
+            if isinstance(val, dict):
+                # Recurse into nested dicts and items
+                flat.update(flatten_schema(val, path))
+            elif isinstance(val, list):
+                # If list of dicts (rare in schema), flatten each item
+                for i, item in enumerate(val):
+                    if isinstance(item, dict):
+                        flat.update(flatten_schema(item, f"{path}[{i}]"))
+        return flat
 
-    for field in sorted(old_fields | new_fields):
-        old_def = old_schema.get(field) if old_schema else None
-        new_def = new_schema.get(field) if new_schema else None
+    old_flat = flatten_schema(old_schema or {})
+    new_flat = flatten_schema(new_schema or {})
+
+    all_changes = []
+    for field in sorted(set(old_flat.keys()) | set(new_flat.keys())):
+        old_def = old_flat.get(field)
+        new_def = new_flat.get(field)
         changes = classify_field_change(field, old_def, new_def)
         all_changes.extend(changes)
 
@@ -305,6 +322,13 @@ def generate_migration_impact(
     if not breaking:
         return None
 
+    def normalize(field):
+        f = field.replace(".items.", ".")
+        for suffix in [".maximum", ".minimum", ".type", ".pattern"]:
+            if f.endswith(suffix):
+                f = f[: -len(suffix)]
+        return f
+
     # Find affected subscribers
     affected_subs = []
     failure_modes = []
@@ -318,17 +342,24 @@ def generate_migration_impact(
         }
         for change in breaking:
             field = change["field"]
+            norm_field = normalize(field)
             consumed = sub.get("fields_consumed", [])
             breaking_fields = [
                 bf["field"]
                 for bf in sub.get("breaking_fields", [])
             ]
-            if field in consumed or field in breaking_fields:
-                affected_fields.append(field)
+            match = (
+                field in consumed
+                or field in breaking_fields
+                or norm_field in consumed
+                or norm_field in breaking_fields
+            )
+            if match:
+                affected_fields.append(norm_field)
                 failure_modes.append({
                     "subscriber_id": sub["subscriber_id"],
-                    "field": field,
-                    "failure_mode": breaking_map.get(field, "schema change may break consumer logic"),
+                    "field": norm_field,
+                    "failure_mode": breaking_map.get(norm_field, "schema change may break consumer logic"),
                 })
         if affected_fields:
             affected_subs.append({
