@@ -245,7 +245,8 @@ def llm_annotate_columns(contract_id, columns_info):
     """Use Claude API to annotate ambiguous columns. Falls back gracefully."""
     try:
         import anthropic
-        client = anthropic.Anthropic()
+        api_key = os.getenv("ANTHROPIC_API_KEY")
+        client = anthropic.Anthropic(api_key=api_key) if api_key else anthropic.Anthropic()
     except Exception:
         return {}
 

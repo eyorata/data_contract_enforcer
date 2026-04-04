@@ -21,6 +21,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import yaml
+import os
 
 
 def iso_now():
@@ -70,9 +71,11 @@ def embed_texts_local(texts, model_name="all-MiniLM-L6-v2"):
     try:
         import requests
         import numpy as np
+        lm_url = os.getenv("LM_STUDIO_EMBEDDINGS_URL", "http://localhost:1234/v1/embeddings")
+        lm_model = os.getenv("LM_STUDIO_EMBEDDINGS_MODEL", "embedding-model")
         response = requests.post(
-            "http://localhost:1234/v1/embeddings",
-            json={"input": texts, "model": "embedding-model"},
+            lm_url,
+            json={"input": texts, "model": lm_model},
             timeout=30,
         )
         if response.status_code == 200:
@@ -117,6 +120,7 @@ def check_embedding_drift(
         random.sample(texts, min(sample_size, len(texts)))
     )
 
+    local_only = os.getenv("EMBEDDINGS_LOCAL_ONLY", "true").lower() == "true"
     current = embed_texts_local(sample)
     current_centroid = np.mean(current, axis=0)
 

@@ -7,6 +7,12 @@ This repo implements the Week 7 Data Contract Enforcer. Below is a quick-start f
 - Install dependencies:
   - `pip install pyyaml pandas reportlab numpy`
 
+## Environment
+Create a `.env` file (already scaffolded) and add your keys/URLs:
+- `ANTHROPIC_API_KEY` for optional LLM annotations in `contracts/generator.py --llm`
+- `LM_STUDIO_EMBEDDINGS_URL` and `LM_STUDIO_EMBEDDINGS_MODEL` for local embeddings
+- `EMBEDDINGS_LOCAL_ONLY=true` to force local embeddings only
+
 ## Inputs
 Required input data is already included under `outputs/`.
 
