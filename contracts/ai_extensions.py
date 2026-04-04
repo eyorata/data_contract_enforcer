@@ -392,8 +392,18 @@ def main():
         default="outputs/week3/extractions.jsonl",
     )
     parser.add_argument(
+        "--extractions",
+        default=None,
+        help="Alias for --week3-data (compatibility).",
+    )
+    parser.add_argument(
         "--week2-data",
         default="outputs/week2/verdicts.jsonl",
+    )
+    parser.add_argument(
+        "--verdicts",
+        default=None,
+        help="Alias for --week2-data (compatibility).",
     )
     parser.add_argument(
         "--traces-data",
@@ -404,6 +414,11 @@ def main():
         default="validation_reports/ai_extensions.json",
     )
     args = parser.parse_args()
+
+    if args.extractions:
+        args.week3_data = args.extractions
+    if args.verdicts:
+        args.week2_data = args.verdicts
 
     print("Running AI Contract Extensions...")
     results = []

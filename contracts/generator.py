@@ -923,6 +923,11 @@ def generate_one(key, source_info, out_dir, lineage_ctx, use_llm=False):
 def main():
     parser = argparse.ArgumentParser(description="Generate Bitol-style data contracts from JSONL outputs.")
     parser.add_argument("--source", help="Path to a single JSONL source file.")
+    parser.add_argument("--contract-id", help="Explicit contract id (optional).")
+    parser.add_argument("--lineage", default="outputs/week4/lineage_snapshots.jsonl",
+                        help="Path to lineage snapshots JSONL.")
+    parser.add_argument("--registry", default="contract_registry/subscriptions.yaml",
+                        help="Path to registry file (accepted for compatibility).")
     parser.add_argument("--output", default="generated_contracts", help="Output directory.")
     parser.add_argument("--all", action="store_true", help="Generate contracts for all known sources.")
     parser.add_argument("--llm", action="store_true", help="Enable LLM annotation (requires ANTHROPIC_API_KEY).")
@@ -933,7 +938,7 @@ def main():
 
     # Step 3: Load lineage context
     print("Loading lineage context...")
-    lineage_ctx = load_lineage_context()
+    lineage_ctx = load_lineage_context(args.lineage)
     print(f"  Lineage consumers: {len(lineage_ctx)} file nodes with consumers")
 
     if args.all:
@@ -944,10 +949,21 @@ def main():
         # Match source to known key
         lower = os.path.basename(args.source).lower()
         matched = None
-        for key, info in SOURCES.items():
-            if os.path.basename(info["path"]).lower() in lower or key in lower:
-                matched = key
-                break
+        if args.contract_id:
+            # Map known contract IDs to keys
+            contract_map = {
+                "week1-intent-classifier-records": "week1",
+                "week3-document-refinery-extractions": "week3",
+                "week4-cartographer-lineage": "week4",
+                "week5-event-sourcing-events": "week5",
+                "langsmith-traces": "langsmith",
+            }
+            matched = contract_map.get(args.contract_id)
+        if not matched:
+            for key, info in SOURCES.items():
+                if os.path.basename(info["path"]).lower() in lower or key in lower:
+                    matched = key
+                    break
         if matched:
             generate_one(matched, SOURCES[matched], out_dir, lineage_ctx, use_llm=args.llm)
         else:

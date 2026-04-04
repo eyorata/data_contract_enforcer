@@ -339,8 +339,20 @@ def main():
         description="Attribute validation failures to their origin."
     )
     parser.add_argument(
-        "--report", required=True,
+        "--report", required=False,
         help="Path to validation report JSON."
+    )
+    parser.add_argument(
+        "--violation", required=False,
+        help="Alias for --report (compatibility with checklist)."
+    )
+    parser.add_argument(
+        "--lineage", default="outputs/week4/lineage_snapshots.jsonl",
+        help="Path to lineage snapshots JSONL."
+    )
+    parser.add_argument(
+        "--registry", default="contract_registry/subscriptions.yaml",
+        help="Path to registry file."
     )
     parser.add_argument(
         "--output", default="violation_log/violations.jsonl",
@@ -348,7 +360,11 @@ def main():
     )
     args = parser.parse_args()
 
-    with open(args.report, "r", encoding="utf-8") as f:
+    report_path = args.report or args.violation
+    if not report_path:
+        raise SystemExit("Missing --report (or --violation) path.")
+
+    with open(report_path, "r", encoding="utf-8") as f:
         report = json.load(f)
 
     contract_id = report.get("contract_id", "unknown")
@@ -365,8 +381,8 @@ def main():
           f"for contract: {contract_id}")
 
     # Load registry and lineage
-    subscriptions = load_registry()
-    lineage = load_lineage()
+    subscriptions = load_registry(args.registry)
+    lineage = load_lineage(args.lineage)
     print(f"  Registry: {len(subscriptions)} subscriptions")
     print(f"  Lineage: {len(lineage['nodes'])} nodes, "
           f"{len(lineage['edges'])} edges")
