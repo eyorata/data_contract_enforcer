@@ -1,0 +1,10 @@
+{
+  "contract_id": "week5-event-sourcing-events",
+  "generated_at": "2026-04-04T07:28:47Z",
+  "snapshots_analyzed": 2,
+  "total_changes": 0,
+  "breaking_changes": 0,
+  "compatible_changes": 0,
+  "compatibility_verdict": "COMPATIBLE",
+  "changes": []
+}

@@ -1,0 +1,121 @@
+{
+  "report_id": "88ab7269670c42f3ada481d4135dd291",
+  "contract_id": "week4-cartographer-lineage",
+  "snapshot_id": "c23cd908d3bcb5f42c93fca7a4733653d3b1fc0162dee451aea33c2a305103b3",
+  "run_timestamp": "2026-04-04T07:27:57Z",
+  "total_checks": 9,
+  "passed": 8,
+  "failed": 0,
+  "warned": 0,
+  "errored": 0,
+  "results": [
+    {
+      "check_id": "week4.snapshot_id.required",
+      "column_name": "snapshot_id",
+      "check_type": "required",
+      "status": "PASS",
+      "actual_value": "missing=0",
+      "expected": "required",
+      "severity": "CRITICAL",
+      "records_failing": 0,
+      "sample_failing": [],
+      "message": "value is required"
+    },
+    {
+      "check_id": "week4.nodes.non_empty",
+      "column_name": "nodes",
+      "check_type": "min_items",
+      "status": "PASS",
+      "actual_value": "invalid=0",
+      "expected": "min_items>=1",
+      "severity": "CRITICAL",
+      "records_failing": 0,
+      "sample_failing": [],
+      "message": "array has too few items"
+    },
+    {
+      "check_id": "week4.nodes.type.enum",
+      "column_name": "nodes[*].type",
+      "check_type": "enum",
+      "status": "PASS",
+      "actual_value": "invalid=0",
+      "expected": "allowed=['file', 'pipeline']",
+      "severity": "HIGH",
+      "records_failing": 0,
+      "sample_failing": [],
+      "message": "value not in allowed set"
+    },
+    {
+      "check_id": "week4.edges.relationship.enum",
+      "column_name": "edges[*].relationship",
+      "check_type": "enum",
+      "status": "PASS",
+      "actual_value": "invalid=0",
+      "expected": "allowed=['CONSUMED_BY', 'PRODUCES']",
+      "severity": "HIGH",
+      "records_failing": 0,
+      "sample_failing": [],
+      "message": "value not in allowed set"
+    },
+    {
+      "check_id": "week4.captured_at.iso8601",
+      "column_name": "captured_at",
+      "check_type": "iso8601",
+      "status": "PASS",
+      "actual_value": "invalid=0",
+      "expected": "ISO-8601",
+      "severity": "HIGH",
+      "records_failing": 0,
+      "sample_failing": [],
+      "message": "invalid timestamp"
+    },
+    {
+      "check_id": "week4.node_count.consistent",
+      "column_name": "node_count",
+      "check_type": "range",
+      "status": "PASS",
+      "actual_value": "min=12.0, max=12.0",
+      "expected": "min>=1",
+      "severity": "HIGH",
+      "records_failing": 0,
+      "sample_failing": [],
+      "message": "value out of range"
+    },
+    {
+      "check_id": "week4.edge_refs.valid_nodes",
+      "column_name": "edges[*].source",
+      "check_type": "required",
+      "status": "PASS",
+      "actual_value": "missing=0",
+      "expected": "required",
+      "severity": "HIGH",
+      "records_failing": 0,
+      "sample_failing": [],
+      "message": "value is required"
+    },
+    {
+      "check_id": "week4.graph.acyclic",
+      "column_name": "edges",
+      "check_type": "custom_acyclic",
+      "status": "PASS",
+      "actual_value": "cyclic_graphs=0",
+      "expected": "acyclic graph",
+      "severity": "CRITICAL",
+      "records_failing": 0,
+      "sample_failing": [],
+      "message": "graph contains cycles"
+    },
+    {
+      "check_id": "week4-cartographer-lineage.node_count.drift",
+      "column_name": "node_count",
+      "check_type": "statistical_drift",
+      "status": "BASELINE_SET",
+      "actual_value": "mean=12.0, stddev=0.0",
+      "expected": "baseline established",
+      "severity": "LOW",
+      "records_failing": 0,
+      "sample_failing": [],
+      "message": "Baseline established for drift detection"
+    }
+  ]
+}

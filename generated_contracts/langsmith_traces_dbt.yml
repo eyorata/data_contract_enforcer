@@ -1,0 +1,47 @@
+version: 2
+models:
+- name: langsmith_traces
+  description: One record per LLM/chain/tool run. Tracks latency, tokens, and errors.
+  columns:
+  - name: id
+    tests:
+    - not_null
+    - unique
+    - dbt_expectations.expect_column_values_to_match_regex:
+        regex: ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$
+  - name: run_type
+    tests:
+    - not_null
+    - accepted_values:
+        values:
+        - chain
+        - embedding
+        - llm
+        - retriever
+        - tool
+  - name: start_time
+    tests:
+    - not_null
+  - name: end_time
+    tests:
+    - not_null
+  - name: prompt_tokens
+    tests:
+    - not_null
+    - dbt_expectations.expect_column_values_to_be_between:
+        min_value: 0
+  - name: completion_tokens
+    tests:
+    - not_null
+    - dbt_expectations.expect_column_values_to_be_between:
+        min_value: 0
+  - name: total_tokens
+    tests:
+    - not_null
+    - dbt_expectations.expect_column_values_to_be_between:
+        min_value: 0
+  - name: latency_ms
+    tests:
+    - not_null
+    - dbt_expectations.expect_column_values_to_be_between:
+        min_value: 0

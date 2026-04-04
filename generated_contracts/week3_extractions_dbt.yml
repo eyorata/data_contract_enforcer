@@ -1,52 +1,48 @@
 version: 2
 models:
 - name: week3_extractions
-  description: "Week 3 Document Refinery — Extraction Records. One record per processed document."
+  description: One record per processed document. Each record contains all facts extracted from the source document and the
+    entities referenced.
   columns:
   - name: doc_id
-    description: "Unique document identifier (UUID)"
     tests:
     - not_null
     - unique
     - dbt_expectations.expect_column_values_to_match_regex:
-        regex: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+        regex: ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$
   - name: source_path
-    description: "Path to the source document"
     tests:
     - not_null
   - name: source_hash
-    description: "SHA-256 hash of the source document"
     tests:
     - not_null
     - dbt_expectations.expect_column_values_to_match_regex:
-        regex: "^[a-f0-9]{64}$"
+        regex: ^[a-f0-9]{64}$
   - name: extracted_facts
-    description: "Array of extracted facts, each with fact_id, confidence, and entity_refs"
     tests:
     - not_null
-    - dbt_expectations.expect_column_values_to_not_be_null
   - name: extracted_facts_confidence
-    description: "Confidence score for each extracted fact (flattened)"
+    description: Confidence score (flattened)
     tests:
     - dbt_expectations.expect_column_values_to_be_between:
         min_value: 0.0
         max_value: 1.0
   - name: entities_type
-    description: "Entity type classification (flattened from entities array)"
+    description: Entity type (flattened)
     tests:
     - accepted_values:
-        values: ["PERSON", "ORG", "LOCATION", "DATE", "AMOUNT", "OTHER"]
+        values:
+        - DATE
+        - LOCATION
+        - PERSON
   - name: extraction_model
-    description: "Name of the ML model used for extraction"
     tests:
     - not_null
   - name: processing_time_ms
-    description: "Processing duration in milliseconds"
     tests:
     - not_null
     - dbt_expectations.expect_column_values_to_be_between:
         min_value: 1
   - name: extracted_at
-    description: "ISO-8601 timestamp of extraction"
     tests:
     - not_null

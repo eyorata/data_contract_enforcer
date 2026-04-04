@@ -1,0 +1,36 @@
+version: 2
+models:
+- name: week1_intent_records
+  description: One record per classified intent with code references and confidence scores.
+  columns:
+  - name: intent_id
+    tests:
+    - not_null
+    - unique
+    - dbt_expectations.expect_column_values_to_match_regex:
+        regex: ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$
+  - name: session_id
+    tests:
+    - not_null
+  - name: intent
+    tests:
+    - not_null
+    - accepted_values:
+        values:
+        - assess_compliance
+        - classify_risk
+        - detect_fraud
+        - extract_financials
+        - summarize_document
+        - verify_identity
+  - name: code_refs
+    tests:
+    - not_null
+  - name: resolved_at
+    tests:
+    - not_null
+  - name: model_version
+    tests:
+    - not_null
+    - dbt_expectations.expect_column_values_to_match_regex:
+        regex: ^(claude|gpt)-

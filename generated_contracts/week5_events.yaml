@@ -3,16 +3,19 @@ apiVersion: v3.0.0
 id: week5-event-sourcing-events
 primary_key: event_id
 info:
-  title: "Week 5 Event Sourcing \u2014 Event Records"
+  title: Week 5 Event Sourcing — Event Records
   version: 1.0.0
   owner: week5-team
   description: One record per event for each aggregate.
-  generated_at: '2026-04-01T17:45:38Z'
+  generated_at: '2026-04-04T07:28:46Z'
 servers:
   local:
     type: local
     path: outputs/week5/events.jsonl
     format: jsonl
+terms:
+  usage: Internal inter-system data contract.
+  limitations: Sequence numbers must be monotonic per aggregate.
 schema:
   event_id:
     type: string
@@ -22,6 +25,41 @@ schema:
   event_type:
     type: string
     required: true
+    enum: &id001
+    - AgentInputValidated
+    - AgentNodeExecuted
+    - AgentOutputWritten
+    - AgentSessionCompleted
+    - AgentSessionStarted
+    - AgentToolCalled
+    - ApplicationApproved
+    - ApplicationDeclined
+    - ApplicationSubmitted
+    - ComplianceCheckCompleted
+    - ComplianceCheckInitiated
+    - ComplianceCheckRequested
+    - ComplianceRuleFailed
+    - ComplianceRuleNoted
+    - ComplianceRulePassed
+    - CreditAnalysisCompleted
+    - CreditAnalysisRequested
+    - CreditRecordOpened
+    - DecisionGenerated
+    - DecisionRequested
+    - DocumentAdded
+    - DocumentFormatValidated
+    - DocumentUploadRequested
+    - DocumentUploaded
+    - ExtractedFactsConsumed
+    - ExtractionCompleted
+    - ExtractionStarted
+    - FraudScreeningCompleted
+    - FraudScreeningInitiated
+    - FraudScreeningRequested
+    - HistoricalProfileConsumed
+    - PackageCreated
+    - PackageReadyForAnalysis
+    - QualityAssessmentCompleted
   aggregate_id:
     type: string
     format: uuid
@@ -29,6 +67,13 @@ schema:
   aggregate_type:
     type: string
     required: true
+    enum: &id002
+    - AgentSession
+    - ComplianceRecord
+    - CreditRecord
+    - DocumentPackage
+    - FraudScreening
+    - LoanApplication
   sequence_number:
     type: integer
     required: true
@@ -78,48 +123,34 @@ quality:
   - id: week5.event_type.registry
     column: event_type
     type: enum
-    allowed:
-    - AgentInputValidated
-    - AgentNodeExecuted
-    - AgentOutputWritten
-    - AgentSessionCompleted
-    - AgentSessionStarted
-    - AgentToolCalled
-    - ApplicationApproved
-    - ApplicationDeclined
-    - ApplicationSubmitted
-    - ComplianceCheckCompleted
-    - ComplianceCheckInitiated
-    - ComplianceCheckRequested
-    - ComplianceRuleFailed
-    - ComplianceRuleNoted
-    - ComplianceRulePassed
-    - CreditAnalysisCompleted
-    - CreditAnalysisRequested
-    - CreditRecordOpened
-    - DecisionGenerated
-    - DecisionRequested
-    - DocumentAdded
-    - DocumentFormatValidated
-    - DocumentUploadRequested
-    - DocumentUploaded
-    - ExtractedFactsConsumed
+    allowed: *id001
     severity: HIGH
   - id: week5.aggregate_id.uuid
     column: aggregate_id
     type: regex
     pattern: ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$
     severity: CRITICAL
-  - id: week5.aggregate_type.pascal
+  - id: week5.aggregate_type.enum
     column: aggregate_type
-    type: regex
-    pattern: ^[A-Z][A-Za-z0-9]*$
+    type: enum
+    allowed: *id002
     severity: HIGH
   - id: week5.sequence.monotonic
     column: sequence_number
     type: monotonic_sequence
     group_by: aggregate_id
     severity: CRITICAL
+    observed:
+      min: 0
+      max: 11
+      mean: 4.185165
+      stddev: 3.098306
+      p25: 1.0
+      p50: 4.0
+      p75: 7.0
+      p95: 10.0
+      p99: 11.0
+      count: 1847
   - id: week5.recorded_at.gte_occurred_at
     column: recorded_at
     type: gte_field
@@ -140,7 +171,15 @@ quality:
     expected_type: object
     severity: HIGH
 lineage:
-  upstream: []
+  upstream:
+  - id: week3-document-refinery-extractions
+    fields_consumed:
+    - doc_id
+    - extracted_facts
+  - id: week4-cartographer-lineage
+    fields_consumed:
+    - nodes
+    - edges
   downstream:
   - id: week7-schema-contract
     description: Week 7 enforcer validates event payload schemas.

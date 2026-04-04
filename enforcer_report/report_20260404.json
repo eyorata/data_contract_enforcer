@@ -1,0 +1,45 @@
+{
+  "generated_at": "2026-04-04T07:29:14Z",
+  "health_score": 85.1,
+  "health_narrative": "Data health is good with minor issues. Some non-critical violations detected.",
+  "total_checks": 69,
+  "passed": 61,
+  "failed": 2,
+  "warned": 0,
+  "errors": 0,
+  "violations_by_severity": {
+    "HIGH": 2
+  },
+  "top_violations": [
+    {
+      "check_id": "week5.event_type.registry",
+      "severity": "HIGH",
+      "contract_id": "week5-event-sourcing-events",
+      "records_failing": 291
+    },
+    {
+      "check_id": "week1.code_refs.line_order",
+      "severity": "HIGH",
+      "contract_id": "week1-intent-classifier-records",
+      "records_failing": 80
+    }
+  ],
+  "recommended_actions": [
+    {
+      "priority": "P1",
+      "action": "Fix week5.event_type.registry: update the producing system to ensure event_type conforms to contract week5-event-sourcing-events clause week5.event_type.registry. Currently 291 records failing."
+    },
+    {
+      "priority": "P1",
+      "action": "Fix week1.code_refs.line_order: update the producing system to ensure code_refs[*].line_end conforms to contract week1-intent-classifier-records clause week1.code_refs.line_order. Currently 80 records failing."
+    },
+    {
+      "priority": "P1",
+      "action": "Investigate ai.trace_error_rate: Error rate: 26.0% (39/150)"
+    },
+    {
+      "priority": "P1",
+      "action": "Investigate ai.trace_latency: Mean latency: 7320.5ms, P95: 14133ms"
+    }
+  ]
+}

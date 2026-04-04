@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python contracts/generator.py --all --output generated_contracts)"
+    ]
+  }
+}

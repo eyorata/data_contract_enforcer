@@ -3,22 +3,27 @@ apiVersion: v3.0.0
 id: week3-document-refinery-extractions
 primary_key: doc_id
 info:
-  title: "Week 3 Document Refinery \u2014 Extraction Records"
+  title: Week 3 Document Refinery — Extraction Records
   version: 1.0.0
   owner: week3-team
-  description: One record per processed document with extracted facts and entities.
-  generated_at: '2026-04-01T17:45:33Z'
+  description: One record per processed document. Each record contains all facts extracted from the source document and the
+    entities referenced.
+  generated_at: '2026-04-04T07:28:46Z'
 servers:
   local:
     type: local
     path: outputs/week3/extractions.jsonl
     format: jsonl
+terms:
+  usage: Internal inter-system data contract. Do not publish.
+  limitations: confidence must remain in 0.0-1.0 float range.
 schema:
   doc_id:
     type: string
     format: uuid
     required: true
     unique: true
+    description: Primary key. UUIDv4. Stable across re-extractions of the same source.
   source_path:
     type: string
     required: true
@@ -26,6 +31,7 @@ schema:
     type: string
     pattern: ^[a-f0-9]{64}$
     required: true
+    description: SHA-256 of the source file. Changes iff the source content changes.
   extracted_facts:
     type: array
     min_items: 1
@@ -33,12 +39,13 @@ schema:
       fact_id:
         type: string
         format: uuid
-        required: true
+        unique: true
       confidence:
         type: number
         minimum: 0.0
         maximum: 1.0
         required: true
+        description: BREAKING CHANGE if changed to 0-100.
       entity_refs:
         type: array
   entities:
@@ -61,6 +68,8 @@ schema:
   extraction_model:
     type: string
     required: true
+    pattern: ^(claude|gpt)-
+    description: Model identifier. Must match pattern claude-* or gpt-*.
   processing_time_ms:
     type: integer
     minimum: 1
@@ -73,6 +82,14 @@ schema:
     required: true
 quality:
   engine: custom
+  type: SodaChecks
+  specification:
+    checks for extractions:
+    - missing_count(doc_id) = 0
+    - duplicate_count(doc_id) = 0
+    - min(confidence_mean) >= 0.0
+    - max(confidence_mean) <= 1.0
+    - row_count >= 1
   checks:
   - id: week3.doc_id.required
     column: doc_id
@@ -103,6 +120,14 @@ quality:
       min: 0.8250199039555977
       max: 0.9934669496204055
       mean: 0.905219
+      stddev: 0.06279
+      p25: 0.834115
+      p50: 0.909569
+      p75: 0.973966
+      p95: 0.993467
+      p99: 0.993467
+      count: 62
+    flags: []
   - id: week3.entities.type.enum
     column: entities[*].type
     type: enum
@@ -131,9 +156,22 @@ quality:
     observed:
       min: 85557
       max: 343487
+      mean: 107489.78
+      stddev: 70370.785265
+      p25: 85647.0
+      p50: 85697.0
+      p75: 85874.0
+      p95: 343487.0
+      p99: 343487.0
+      count: 50
   - id: week3.extracted_at.iso8601
     column: extracted_at
     type: iso8601
+    severity: HIGH
+  - id: week3.extraction_model.pattern
+    column: extraction_model
+    type: regex
+    pattern: ^(claude|gpt)-
     severity: HIGH
 lineage:
   upstream: []
@@ -147,3 +185,13 @@ lineage:
     breaking_if_changed:
     - extracted_facts.confidence
     - doc_id
+  - id: pipeline::week4-cartographer
+    description: 'Lineage-detected consumer: pipeline::week4-cartographer'
+    fields_consumed:
+    - doc_id
+    - extracted_facts
+  - id: pipeline::week5-event-sourcing
+    description: 'Lineage-detected consumer: pipeline::week5-event-sourcing'
+    fields_consumed:
+    - doc_id
+    - extracted_facts

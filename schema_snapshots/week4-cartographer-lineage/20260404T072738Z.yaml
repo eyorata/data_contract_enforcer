@@ -1,0 +1,53 @@
+snapshot_id:
+  type: string
+  format: uuid
+  required: true
+  unique: true
+captured_at:
+  type: string
+  format: date-time
+  required: true
+nodes:
+  type: array
+  min_items: 1
+  items:
+    node_id:
+      type: string
+      required: true
+      unique: true
+    type:
+      type: string
+      enum:
+      - file
+      - pipeline
+      required: true
+    metadata:
+      type: object
+      required: true
+edges:
+  type: array
+  items:
+    edge_id:
+      type: string
+      format: uuid
+      required: true
+    source:
+      type: string
+      required: true
+    target:
+      type: string
+      required: true
+    relationship:
+      type: string
+      enum:
+      - CONSUMED_BY
+      - PRODUCES
+      required: true
+node_count:
+  type: integer
+  minimum: 1
+  required: true
+edge_count:
+  type: integer
+  minimum: 0
+  required: true

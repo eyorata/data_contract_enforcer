@@ -1,0 +1,90 @@
+event_id:
+  type: string
+  format: uuid
+  required: true
+  unique: true
+event_type:
+  type: string
+  required: true
+  enum:
+  - AgentInputValidated
+  - AgentNodeExecuted
+  - AgentOutputWritten
+  - AgentSessionCompleted
+  - AgentSessionStarted
+  - AgentToolCalled
+  - ApplicationApproved
+  - ApplicationDeclined
+  - ApplicationSubmitted
+  - ComplianceCheckCompleted
+  - ComplianceCheckInitiated
+  - ComplianceCheckRequested
+  - ComplianceRuleFailed
+  - ComplianceRuleNoted
+  - ComplianceRulePassed
+  - CreditAnalysisCompleted
+  - CreditAnalysisRequested
+  - CreditRecordOpened
+  - DecisionGenerated
+  - DecisionRequested
+  - DocumentAdded
+  - DocumentFormatValidated
+  - DocumentUploadRequested
+  - DocumentUploaded
+  - ExtractedFactsConsumed
+  - ExtractionCompleted
+  - ExtractionStarted
+  - FraudScreeningCompleted
+  - FraudScreeningInitiated
+  - FraudScreeningRequested
+  - HistoricalProfileConsumed
+  - PackageCreated
+  - PackageReadyForAnalysis
+  - QualityAssessmentCompleted
+aggregate_id:
+  type: string
+  format: uuid
+  required: true
+aggregate_type:
+  type: string
+  required: true
+  enum:
+  - AgentSession
+  - ComplianceRecord
+  - CreditRecord
+  - DocumentPackage
+  - FraudScreening
+  - LoanApplication
+sequence_number:
+  type: integer
+  required: true
+payload:
+  type: object
+  required: true
+metadata:
+  type: object
+  required: true
+  properties:
+    causation_id:
+      type: string
+      nullable: true
+    correlation_id:
+      type: string
+      required: true
+    user_id:
+      type: string
+      required: true
+    source_service:
+      type: string
+      required: true
+schema_version:
+  type: string
+  required: true
+occurred_at:
+  type: string
+  format: date-time
+  required: true
+recorded_at:
+  type: string
+  format: date-time
+  required: true

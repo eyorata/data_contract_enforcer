@@ -1,0 +1,140 @@
+kind: DataContract
+apiVersion: v3.0.0
+id: week1-intent-classifier-records
+primary_key: intent_id
+info:
+  title: Week 1 Intent Classifier — Intent Records
+  version: 1.0.0
+  owner: week1-team
+  description: One record per classified intent with code references and confidence scores.
+  generated_at: '2026-04-04T07:28:46Z'
+servers:
+  local:
+    type: local
+    path: outputs/week1/intent_records.jsonl
+    format: jsonl
+terms:
+  usage: Internal inter-system data contract. Do not publish.
+  limitations: code_refs confidence must remain in 0.0-1.0 float range.
+schema:
+  intent_id:
+    type: string
+    format: uuid
+    required: true
+    unique: true
+    description: Primary key. UUIDv4.
+  session_id:
+    type: string
+    format: uuid
+    required: true
+  intent:
+    type: string
+    enum: &id001
+    - assess_compliance
+    - classify_risk
+    - detect_fraud
+    - extract_financials
+    - summarize_document
+    - verify_identity
+    required: true
+    description: Classified intent category.
+  code_refs:
+    type: array
+    min_items: 1
+    required: true
+    items:
+      file:
+        type: string
+        required: true
+      line_start:
+        type: integer
+        minimum: 1
+        required: true
+      line_end:
+        type: integer
+        minimum: 1
+        required: true
+      symbol:
+        type: string
+        required: true
+      confidence:
+        type: number
+        minimum: 0.0
+        maximum: 1.0
+        required: true
+  resolved_at:
+    type: string
+    format: date-time
+    required: true
+  source_text:
+    type: string
+    required: true
+  model_version:
+    type: string
+    required: true
+    pattern: ^(claude|gpt)-
+quality:
+  engine: custom
+  checks:
+  - id: week1.intent_id.required
+    column: intent_id
+    type: required
+    severity: CRITICAL
+  - id: week1.intent_id.uuid
+    column: intent_id
+    type: regex
+    pattern: ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$
+    severity: CRITICAL
+  - id: week1.intent.enum
+    column: intent
+    type: enum
+    allowed: *id001
+    severity: HIGH
+  - id: week1.code_refs.non_empty
+    column: code_refs
+    type: min_items
+    min_items: 1
+    severity: CRITICAL
+  - id: week1.code_refs.confidence.range
+    column: code_refs[*].confidence
+    type: range
+    min: 0.0
+    max: 1.0
+    severity: CRITICAL
+    observed:
+      min: 0.6013
+      max: 0.9898
+      mean: 0.799974
+      stddev: 0.110024
+      p25: 0.69665
+      p50: 0.8063
+      p75: 0.89465
+      p95: 0.96127
+      p99: 0.985972
+      count: 203
+  - id: week1.code_refs.line_order
+    column: code_refs[*].line_end
+    type: gte_field
+    other_column: code_refs[*].line_start
+    severity: HIGH
+  - id: week1.resolved_at.iso8601
+    column: resolved_at
+    type: iso8601
+    severity: HIGH
+  - id: week1.model_version.pattern
+    column: model_version
+    type: regex
+    pattern: ^(claude|gpt)-
+    severity: HIGH
+lineage:
+  upstream: []
+  downstream:
+  - id: week3-document-refinery
+    description: Document Refinery uses intent records to guide extraction.
+    fields_consumed:
+    - intent_id
+    - code_refs
+    - intent
+    breaking_if_changed:
+    - code_refs.confidence
+    - intent_id

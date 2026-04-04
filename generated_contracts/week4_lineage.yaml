@@ -1,0 +1,138 @@
+kind: DataContract
+apiVersion: v3.0.0
+id: week4-cartographer-lineage
+primary_key: snapshot_id
+info:
+  title: Week 4 Cartographer — Lineage Snapshots
+  version: 1.0.0
+  owner: week4-team
+  description: Periodic snapshots of the lineage graph. Each record is a full graph snapshot.
+  generated_at: '2026-04-04T07:28:46Z'
+servers:
+  local:
+    type: local
+    path: outputs/week4/lineage_snapshots.jsonl
+    format: jsonl
+terms:
+  usage: Internal inter-system data contract.
+  limitations: Graph must be acyclic.
+schema:
+  snapshot_id:
+    type: string
+    format: uuid
+    required: true
+    unique: true
+  captured_at:
+    type: string
+    format: date-time
+    required: true
+  nodes:
+    type: array
+    min_items: 1
+    items:
+      node_id:
+        type: string
+        required: true
+        unique: true
+      type:
+        type: string
+        enum:
+        - file
+        - pipeline
+        required: true
+      metadata:
+        type: object
+        required: true
+  edges:
+    type: array
+    items:
+      edge_id:
+        type: string
+        format: uuid
+        required: true
+      source:
+        type: string
+        required: true
+      target:
+        type: string
+        required: true
+      relationship:
+        type: string
+        enum:
+        - CONSUMED_BY
+        - PRODUCES
+        required: true
+  node_count:
+    type: integer
+    minimum: 1
+    required: true
+  edge_count:
+    type: integer
+    minimum: 0
+    required: true
+quality:
+  engine: custom
+  checks:
+  - id: week4.snapshot_id.required
+    column: snapshot_id
+    type: required
+    severity: CRITICAL
+  - id: week4.nodes.non_empty
+    column: nodes
+    type: min_items
+    min_items: 1
+    severity: CRITICAL
+  - id: week4.nodes.type.enum
+    column: nodes[*].type
+    type: enum
+    allowed:
+    - file
+    - pipeline
+    severity: HIGH
+  - id: week4.edges.relationship.enum
+    column: edges[*].relationship
+    type: enum
+    allowed:
+    - CONSUMED_BY
+    - PRODUCES
+    severity: HIGH
+  - id: week4.captured_at.iso8601
+    column: captured_at
+    type: iso8601
+    severity: HIGH
+  - id: week4.node_count.consistent
+    column: node_count
+    type: range
+    min: 1
+    severity: HIGH
+  - id: week4.edge_refs.valid_nodes
+    column: edges[*].source
+    type: required
+    severity: HIGH
+  - id: week4.graph.acyclic
+    column: edges
+    type: custom_acyclic
+    severity: CRITICAL
+lineage:
+  upstream:
+  - id: week3-document-refinery-extractions
+    fields_consumed:
+    - doc_id
+    - extracted_facts
+  downstream:
+  - id: week5-event-sourcing
+    description: Event Sourcing uses lineage for provenance.
+    fields_consumed:
+    - nodes
+    - edges
+    breaking_if_changed:
+    - nodes.node_id
+    - edges.relationship
+  - id: week7-enforcer
+    description: Enforcer traverses graph for blame chains.
+    fields_consumed:
+    - nodes
+    - edges
+    breaking_if_changed:
+    - nodes
+    - edges

@@ -1,0 +1,127 @@
+{
+  "report_id": "0f38d362e69d40f4820826a0b42dffd7",
+  "contract_id": "week1-intent-classifier-records",
+  "snapshot_id": "5c8bc276cd4156c23ecb75bc90fc4bc09ca9c3b6aede414ffe1ca277c2f59f97",
+  "run_timestamp": "2026-04-04T07:27:56Z",
+  "total_checks": 9,
+  "passed": 7,
+  "failed": 1,
+  "warned": 0,
+  "errored": 0,
+  "results": [
+    {
+      "check_id": "week1.intent_id.required",
+      "column_name": "intent_id",
+      "check_type": "required",
+      "status": "PASS",
+      "actual_value": "missing=0",
+      "expected": "required",
+      "severity": "CRITICAL",
+      "records_failing": 0,
+      "sample_failing": [],
+      "message": "value is required"
+    },
+    {
+      "check_id": "week1.intent_id.uuid",
+      "column_name": "intent_id",
+      "check_type": "regex",
+      "status": "PASS",
+      "actual_value": "invalid=0",
+      "expected": "pattern=^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$",
+      "severity": "CRITICAL",
+      "records_failing": 0,
+      "sample_failing": [],
+      "message": "value does not match pattern"
+    },
+    {
+      "check_id": "week1.intent.enum",
+      "column_name": "intent",
+      "check_type": "enum",
+      "status": "PASS",
+      "actual_value": "invalid=0",
+      "expected": "allowed=['assess_compliance', 'classify_risk', 'detect_fraud', 'extract_financials', 'summarize_document', 'verify_identity']",
+      "severity": "HIGH",
+      "records_failing": 0,
+      "sample_failing": [],
+      "message": "value not in allowed set"
+    },
+    {
+      "check_id": "week1.code_refs.non_empty",
+      "column_name": "code_refs",
+      "check_type": "min_items",
+      "status": "PASS",
+      "actual_value": "invalid=0",
+      "expected": "min_items>=1",
+      "severity": "CRITICAL",
+      "records_failing": 0,
+      "sample_failing": [],
+      "message": "array has too few items"
+    },
+    {
+      "check_id": "week1.code_refs.confidence.range",
+      "column_name": "code_refs[*].confidence",
+      "check_type": "range",
+      "status": "PASS",
+      "actual_value": "min=0.6013, max=0.9898",
+      "expected": "min>=0.0, max<=1.0",
+      "severity": "CRITICAL",
+      "records_failing": 0,
+      "sample_failing": [],
+      "message": "value out of range"
+    },
+    {
+      "check_id": "week1.code_refs.line_order",
+      "column_name": "code_refs[*].line_end",
+      "check_type": "gte_field",
+      "status": "FAIL",
+      "actual_value": "invalid=80",
+      "expected": "code_refs[*].line_end>=code_refs[*].line_start",
+      "severity": "HIGH",
+      "records_failing": 80,
+      "sample_failing": [
+        "7105924d-6e55-4fdd-bc45-966b4c33db94",
+        "400ed638-f1cb-4d02-9868-02cb8d654f59",
+        "32f157c9-22d5-49a7-9f7d-893f249aba32",
+        "21ae307b-9f9e-4e52-97bc-7c70332b435d",
+        "01366dae-ae80-4aa1-8d08-5158cb5eee48"
+      ],
+      "message": "recorded_at is before occurred_at"
+    },
+    {
+      "check_id": "week1.resolved_at.iso8601",
+      "column_name": "resolved_at",
+      "check_type": "iso8601",
+      "status": "PASS",
+      "actual_value": "invalid=0",
+      "expected": "ISO-8601",
+      "severity": "HIGH",
+      "records_failing": 0,
+      "sample_failing": [],
+      "message": "invalid timestamp"
+    },
+    {
+      "check_id": "week1.model_version.pattern",
+      "column_name": "model_version",
+      "check_type": "regex",
+      "status": "PASS",
+      "actual_value": "invalid=0",
+      "expected": "pattern=^(claude|gpt)-",
+      "severity": "HIGH",
+      "records_failing": 0,
+      "sample_failing": [],
+      "message": "value does not match pattern"
+    },
+    {
+      "check_id": "week1-intent-classifier-records.code_refs[*].confidence.drift",
+      "column_name": "code_refs[*].confidence",
+      "check_type": "statistical_drift",
+      "status": "BASELINE_SET",
+      "actual_value": "mean=0.8, stddev=0.11",
+      "expected": "baseline established",
+      "severity": "LOW",
+      "records_failing": 0,
+      "sample_failing": [],
+      "message": "Baseline established for drift detection"
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "report_id": "dcc9d8b912674e0fb64010d334219b19",
+  "report_type": "ai_extensions",
+  "run_timestamp": "2026-04-04T07:29:02Z",
+  "total_checks": 5,
+  "passed": 2,
+  "failed": 0,
+  "warned": 2,
+  "results": [
+    {
+      "check_id": "ai.embedding_drift",
+      "status": "BASELINE_SET",
+      "message": "Baseline established from 62 samples",
+      "drift_score": 0.0,
+      "threshold": 0.15,
+      "sample_size": 62
+    },
+    {
+      "check_id": "ai.prompt_input_validation",
+      "status": "PASS",
+      "total_records": 50,
+      "valid": 50,
+      "quarantined": 0,
+      "quarantine_rate": 0.0,
+      "sample_errors": [],
+      "message": "0/50 records quarantined"
+    },
+    {
+      "check_id": "ai.output_schema_violation_rate",
+      "status": "PASS",
+      "total_outputs": 100,
+      "schema_violations": 0,
+      "violation_rate": 0.0,
+      "trend": "unknown",
+      "warn_threshold": 0.02,
+      "sample_violations": [],
+      "message": "Violation rate: 0.0% (0/100)"
+    },
+    {
+      "check_id": "ai.trace_error_rate",
+      "status": "WARN",
+      "error_rate": 0.26,
+      "errors": 39,
+      "total": 150,
+      "message": "Error rate: 26.0% (39/150)"
+    },
+    {
+      "check_id": "ai.trace_latency",
+      "status": "WARN",
+      "mean_latency_ms": 7320.5,
+      "p95_latency_ms": 14133,
+      "message": "Mean latency: 7320.5ms, P95: 14133ms"
+    }
+  ]
+}

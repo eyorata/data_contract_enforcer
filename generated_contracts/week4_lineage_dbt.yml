@@ -1,0 +1,37 @@
+version: 2
+models:
+- name: week4_lineage
+  description: Periodic snapshots of the lineage graph. Each record is a full graph snapshot.
+  columns:
+  - name: snapshot_id
+    tests:
+    - not_null
+    - unique
+  - name: captured_at
+    tests:
+    - not_null
+  - name: nodes
+    tests:
+    - not_null
+  - name: edges
+    tests:
+    - not_null
+  - name: node_count
+    tests:
+    - not_null
+    - dbt_expectations.expect_column_values_to_be_between:
+        min_value: 1
+  - name: nodes_type
+    description: Node type (flattened)
+    tests:
+    - accepted_values:
+        values:
+        - file
+        - pipeline
+  - name: edges_relationship
+    description: Edge relationship (flattened)
+    tests:
+    - accepted_values:
+        values:
+        - CONSUMED_BY
+        - PRODUCES

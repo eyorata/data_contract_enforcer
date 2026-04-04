@@ -1,0 +1,174 @@
+kind: DataContract
+apiVersion: v3.0.0
+id: langsmith-traces
+primary_key: id
+info:
+  title: LangSmith Trace Records
+  version: 1.0.0
+  owner: ai-observability
+  description: One record per LLM/chain/tool run. Tracks latency, tokens, and errors.
+  generated_at: '2026-04-04T07:28:46Z'
+servers:
+  local:
+    type: local
+    path: outputs/traces/runs.jsonl
+    format: jsonl
+terms:
+  usage: Internal observability contract.
+  limitations: total_tokens must equal prompt_tokens + completion_tokens.
+schema:
+  id:
+    type: string
+    format: uuid
+    required: true
+    unique: true
+  name:
+    type: string
+    required: true
+  run_type:
+    type: string
+    enum: &id001
+    - chain
+    - embedding
+    - llm
+    - retriever
+    - tool
+    required: true
+  parent_run_id:
+    type: string
+    format: uuid
+    nullable: true
+  session_id:
+    type: string
+    format: uuid
+    required: true
+  start_time:
+    type: string
+    format: date-time
+    required: true
+  end_time:
+    type: string
+    format: date-time
+    required: true
+  status:
+    type: string
+    enum:
+    - error
+    - success
+    required: true
+  error:
+    type: object
+    nullable: true
+  inputs:
+    type: object
+    required: true
+  outputs:
+    type: object
+    nullable: true
+  prompt_tokens:
+    type: integer
+    minimum: 0
+    required: true
+  completion_tokens:
+    type: integer
+    minimum: 0
+    required: true
+  total_tokens:
+    type: integer
+    minimum: 0
+    required: true
+  model_name:
+    type: string
+    nullable: true
+  latency_ms:
+    type: integer
+    minimum: 0
+    required: true
+  tags:
+    type: array
+quality:
+  engine: custom
+  type: SodaChecks
+  specification:
+    checks for traces:
+    - missing_count(id) = 0
+    - end_time > start_time
+    - total_tokens = prompt_tokens + completion_tokens
+    - failed_records(error != null AND outputs IS NOT NULL) = 0
+  checks:
+  - id: langsmith.id.uuid
+    column: id
+    type: regex
+    pattern: ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$
+    severity: CRITICAL
+  - id: langsmith.run_type.enum
+    column: run_type
+    type: enum
+    allowed: *id001
+    severity: CRITICAL
+  - id: langsmith.end_after_start
+    column: end_time
+    type: gte_field
+    other_column: start_time
+    severity: CRITICAL
+  - id: langsmith.total_tokens.sum
+    column: total_tokens
+    type: token_sum_check
+    prompt_col: prompt_tokens
+    completion_col: completion_tokens
+    severity: CRITICAL
+  - id: langsmith.error_implies_no_output
+    column: error
+    type: error_output_check
+    output_col: outputs
+    severity: HIGH
+  - id: langsmith.latency.range
+    column: latency_ms
+    type: range
+    min: 0
+    severity: HIGH
+    observed:
+      min: 354
+      max: 14861
+      mean: 7320.513333
+      stddev: 4313.037323
+      p25: 3068.0
+      p50: 7160.5
+      p75: 11180.75
+      p95: 14104.2
+      p99: 14763.47
+      count: 150
+  - id: langsmith.total_tokens.range
+    column: total_tokens
+    type: range
+    min: 0
+    severity: HIGH
+    observed:
+      min: 291
+      max: 3403
+      mean: 1806.913333
+      stddev: 710.212313
+      p25: 1344.0
+      p50: 1726.5
+      p75: 2246.75
+      p95: 3056.35
+      p99: 3309.87
+      count: 150
+  - id: langsmith.start_time.iso8601
+    column: start_time
+    type: iso8601
+    severity: HIGH
+lineage:
+  upstream: []
+  downstream:
+  - id: week7-enforcer
+    description: Enforcer monitors LLM trace quality for AI extensions.
+    fields_consumed:
+    - id
+    - run_type
+    - total_tokens
+    - error
+    - outputs
+    breaking_if_changed:
+    - run_type
+    - total_tokens
