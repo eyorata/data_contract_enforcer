@@ -32,6 +32,7 @@ except ImportError:
     np = None
 
 UUID_REGEX = "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+BASELINES_PATH = "schema_snapshots/baselines.json"
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
@@ -100,6 +101,43 @@ def write_dbt_schema(path, model_name, columns, description=""):
     }
     with open(path, "w", encoding="utf-8") as f:
         yaml.safe_dump(dbt, f, sort_keys=False, width=120)
+
+
+def load_baselines(path=BASELINES_PATH):
+    if not os.path.exists(path):
+        return {}
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def save_baselines(baselines, path=BASELINES_PATH):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(baselines, f, indent=2)
+
+
+def update_baselines(contract_id, records, checks):
+    """Persist mean/stddev for numeric columns to baselines file."""
+    baselines = load_baselines()
+    contract_baselines = baselines.get(contract_id, {})
+
+    numeric_paths = [c["column"] for c in checks if c.get("type") == "range"]
+    for path in numeric_paths:
+        values = extract_flat_values(records, path)
+        nums = [v for v in values if isinstance(v, (int, float))]
+        if not nums:
+            continue
+        mean = statistics.mean(nums)
+        stddev = statistics.stdev(nums) if len(nums) > 1 else 0.0
+        contract_baselines[path] = {
+            "mean": round(mean, 6),
+            "stddev": round(stddev, 6),
+            "count": len(nums),
+            "established_at": iso_now(),
+        }
+
+    baselines[contract_id] = contract_baselines
+    save_baselines(baselines)
 
 
 # ── Step 1: Structural Profiling ─────────────────────────────────────────────
@@ -872,6 +910,11 @@ def generate_one(key, source_info, out_dir, lineage_ctx, use_llm=False):
     # Schema snapshot
     snap_path = save_schema_snapshot(contract["id"], contract["schema"])
     print(f"    Snapshot: {snap_path}")
+
+    # Baseline persistence for numeric columns (mean/stddev)
+    checks = contract.get("quality", {}).get("checks", [])
+    update_baselines(contract["id"], records, checks)
+    print(f"    Baselines updated: {BASELINES_PATH}")
 
     return contract
 

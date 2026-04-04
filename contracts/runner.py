@@ -520,7 +520,7 @@ def run_statistical_drift(contract_id, records, checks):
             deviation = abs(current_mean - bl_mean) / bl_stddev
             if deviation > 3:
                 status = "FAIL"
-                severity = "HIGH"
+                severity = "CRITICAL"
                 msg = (
                     f"Statistical drift CRITICAL: mean shifted "
                     f"{round(deviation, 2)} stddev from baseline"
@@ -564,6 +564,30 @@ def run_statistical_drift(contract_id, records, checks):
     return drift_results
 
 
+def evaluate_mode(results, mode):
+    """Apply enforcement mode semantics."""
+    mode = mode.upper()
+    critical_fails = [
+        r for r in results
+        if r.get("status") == "FAIL"
+        and r.get("severity") == "CRITICAL"
+    ]
+    high_fails = [
+        r for r in results
+        if r.get("status") == "FAIL"
+        and r.get("severity") == "HIGH"
+    ]
+
+    if mode == "AUDIT":
+        return "AUDIT_ONLY", []
+    if mode == "WARN":
+        return ("FAIL" if critical_fails else "PASS"), critical_fails
+    if mode == "ENFORCE":
+        blocking = critical_fails + high_fails
+        return ("FAIL" if blocking else "PASS"), blocking
+    return "UNKNOWN", []
+
+
 # ── Check dispatcher ─────────────────────────────────────────────────────────
 
 def run_check(check, records, record_ids):
@@ -604,6 +628,11 @@ def main():
                         help="Path to JSONL data.")
     parser.add_argument("--output", required=False,
                         help="Output path for validation report JSON.")
+    parser.add_argument(
+        "--mode", default="AUDIT",
+        choices=["AUDIT", "WARN", "ENFORCE"],
+        help="Enforcement mode: AUDIT (log only), WARN (block on CRITICAL), ENFORCE (block on CRITICAL+HIGH).",
+    )
     args = parser.parse_args()
 
     with open(args.contract, "r", encoding="utf-8") as f:
@@ -656,7 +685,15 @@ def main():
         "warned": warned,
         "errored": errored,
         "results": results,
+        "mode": args.mode.upper(),
     }
+
+    overall_status, blocking = evaluate_mode(results, args.mode)
+    report["overall_status"] = overall_status
+    report["blocking_checks"] = [
+        {"check_id": r.get("check_id"), "severity": r.get("severity")}
+        for r in blocking
+    ]
 
     output_path = args.output
     if not output_path:

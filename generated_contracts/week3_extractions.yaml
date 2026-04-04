@@ -8,7 +8,7 @@ info:
   owner: week3-team
   description: One record per processed document. Each record contains all facts extracted from the source document and the
     entities referenced.
-  generated_at: '2026-04-04T07:28:46Z'
+  generated_at: '2026-04-04T07:43:52Z'
 servers:
   local:
     type: local

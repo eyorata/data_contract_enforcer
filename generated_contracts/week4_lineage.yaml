@@ -7,7 +7,7 @@ info:
   version: 1.0.0
   owner: week4-team
   description: Periodic snapshots of the lineage graph. Each record is a full graph snapshot.
-  generated_at: '2026-04-04T07:28:46Z'
+  generated_at: '2026-04-04T07:43:52Z'
 servers:
   local:
     type: local

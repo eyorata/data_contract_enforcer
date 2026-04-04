@@ -14,7 +14,7 @@ Usage:
 import argparse
 import json
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 import yaml
 
@@ -42,6 +42,29 @@ def load_snapshots(contract_id, base_dir="schema_snapshots"):
             ts = fname.replace(".yaml", "")
             snapshots.append({"timestamp": ts, "path": fpath, "schema": schema})
     return snapshots
+
+
+def parse_snapshot_ts(ts):
+    """Parse snapshot timestamp like 20260404T072738Z."""
+    try:
+        return datetime.strptime(ts, "%Y%m%dT%H%M%SZ").replace(tzinfo=timezone.utc)
+    except Exception:
+        return None
+
+
+def parse_since(since):
+    """Parse --since values like '7 days ago' or ISO date."""
+    s = since.strip().lower()
+    if "day" in s:
+        try:
+            days = int(s.split()[0])
+            return datetime.now(timezone.utc) - timedelta(days=days)
+        except Exception:
+            return None
+    try:
+        return datetime.fromisoformat(s).replace(tzinfo=timezone.utc)
+    except Exception:
+        return None
 
 
 def load_registry(path="contract_registry/subscriptions.yaml"):
@@ -171,13 +194,18 @@ def classify_field_change(field_name, old_def, new_def):
             (old_type, new_type), False
         )
         change_type = "widen_type" if is_widen else "narrow_type"
-        changes.append({
+        change = {
             "field": field_name,
             "change_type": change_type,
             "old": {"type": old_type},
             "new": {"type": new_type},
             **CHANGE_TYPES[change_type],
-        })
+        }
+        # Explicitly flag narrow numeric scale change as CRITICAL breaking
+        if change_type == "narrow_type" and old_type in ("number", "float") and new_type in ("integer", "int"):
+            change["severity"] = "CRITICAL"
+            change["reason"] = "Numeric scale/type narrowed (e.g., 0.0–1.0 to 0–100) — breaking."
+        changes.append(change)
 
     # Enum changes
     old_enum = set(old_def.get("enum", []))
@@ -226,18 +254,28 @@ def classify_field_change(field_name, old_def, new_def):
                 **CHANGE_TYPES["add_required_field"],
             })
 
-    # Range constraint changes
+    # Range constraint changes (explicitly flag scale shifts as CRITICAL)
     for bound in ("minimum", "maximum"):
         old_bound = old_def.get(bound)
         new_bound = new_def.get(bound)
         if old_bound != new_bound:
-            changes.append({
+            change = {
                 "field": field_name,
                 "change_type": "change_constraint",
                 "old": {bound: old_bound},
                 "new": {bound: new_bound},
                 **CHANGE_TYPES["change_constraint"],
-            })
+            }
+            # Explicit scale change detection (0.0–1.0 -> 0–100)
+            if bound == "maximum":
+                try:
+                    if old_bound is not None and new_bound is not None:
+                        if float(old_bound) <= 1.0 and float(new_bound) >= 10.0:
+                            change["severity"] = "CRITICAL"
+                            change["reason"] = "Confidence scale change detected (0.0–1.0 -> 0–100)."
+                except Exception:
+                    pass
+            changes.append(change)
 
     return changes
 
@@ -269,10 +307,15 @@ def generate_migration_impact(
 
     # Find affected subscribers
     affected_subs = []
+    failure_modes = []
     for sub in subscriptions:
         if sub.get("contract_id") != contract_id:
             continue
         affected_fields = []
+        breaking_map = {
+            bf["field"]: bf.get("reason", "breaking field")
+            for bf in sub.get("breaking_fields", [])
+        }
         for change in breaking:
             field = change["field"]
             consumed = sub.get("fields_consumed", [])
@@ -282,6 +325,11 @@ def generate_migration_impact(
             ]
             if field in consumed or field in breaking_fields:
                 affected_fields.append(field)
+                failure_modes.append({
+                    "subscriber_id": sub["subscriber_id"],
+                    "field": field,
+                    "failure_mode": breaking_map.get(field, "schema change may break consumer logic"),
+                })
         if affected_fields:
             affected_subs.append({
                 "subscriber_id": sub["subscriber_id"],
@@ -327,6 +375,7 @@ def generate_migration_impact(
             "affected_subscribers": affected_subs,
             "subscriber_count": len(affected_subs),
         },
+        "consumer_failure_modes": failure_modes,
         "migration_checklist": checklist,
         "rollback_plan": (
             "Revert to previous schema snapshot. "
@@ -360,6 +409,12 @@ def main():
     print(f"Analyzing schema evolution for: {contract_id}")
 
     snapshots = load_snapshots(contract_id)
+    cutoff = parse_since(args.since)
+    if cutoff:
+        snapshots = [
+            s for s in snapshots
+            if parse_snapshot_ts(s["timestamp"]) and parse_snapshot_ts(s["timestamp"]) >= cutoff
+        ]
     if len(snapshots) < 2:
         print(
             f"  Only {len(snapshots)} snapshot(s) found. "

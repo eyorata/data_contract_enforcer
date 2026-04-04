@@ -44,6 +44,12 @@ def load_jsonl(path):
     return records
 
 
+def append_violation_log(record, path="violation_log/violations.jsonl"):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "a", encoding="utf-8") as f:
+        f.write(json.dumps(record) + "\n")
+
+
 # ── Extension 1: Embedding Drift Detection ───────────────────────────────────
 
 def embed_texts_local(texts, model_name="all-MiniLM-L6-v2"):
@@ -293,7 +299,7 @@ def check_output_schema_violation_rate(
             if len(sample_violations) >= 5:
                 break
 
-    return {
+    result = {
         "check_id": "ai.output_schema_violation_rate",
         "status": status,
         "total_outputs": total,
@@ -307,6 +313,20 @@ def check_output_schema_violation_rate(
             f"({violations}/{total})"
         ),
     }
+    # Write WARN/FAIL into violation log for traceability
+    if status in ("WARN", "FAIL"):
+        append_violation_log({
+            "violation_id": __import__("uuid").uuid4().hex,
+            "check_id": "ai.output_schema_violation_rate",
+            "contract_id": "week2-digital-courtroom-verdicts",
+            "column_name": "overall_verdict",
+            "severity": "WARN" if status == "WARN" else "HIGH",
+            "detected_at": iso_now(),
+            "message": result["message"],
+            "blast_radius": {"affected_nodes": ["week7-ai-extension"]},
+        })
+
+    return result
 
 
 # ── LangSmith Trace Quality ─────────────────────────────────────────────────

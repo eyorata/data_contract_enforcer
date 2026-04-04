@@ -7,7 +7,7 @@ info:
   version: 1.0.0
   owner: week1-team
   description: One record per classified intent with code references and confidence scores.
-  generated_at: '2026-04-04T07:28:46Z'
+  generated_at: '2026-04-04T07:43:52Z'
 servers:
   local:
     type: local

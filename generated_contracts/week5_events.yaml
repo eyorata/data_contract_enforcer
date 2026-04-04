@@ -7,7 +7,7 @@ info:
   version: 1.0.0
   owner: week5-team
   description: One record per event for each aggregate.
-  generated_at: '2026-04-04T07:28:46Z'
+  generated_at: '2026-04-04T07:43:52Z'
 servers:
   local:
     type: local

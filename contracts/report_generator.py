@@ -186,6 +186,10 @@ def build_pdf(output_path):
     ai_report = load_ai_report()
     schema_reports = load_schema_evolution_reports()
     violations = load_violation_log()
+    violation_map = {}
+    for v in violations:
+        key = (v.get("contract_id"), v.get("check_id"))
+        violation_map[key] = v
 
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
@@ -305,15 +309,25 @@ def build_pdf(output_path):
             "<b>Top Violations:</b>", body
         ))
         for i, v in enumerate(critical_first[:3], 1):
+            v_key = (v.get("contract_id"), v.get("check_id"))
+            vlog = violation_map.get(v_key, {})
+            blast = vlog.get("blast_radius", {})
+            affected_nodes = blast.get("affected_nodes", [])
+            affected_pipes = blast.get("affected_pipelines", [])
+            impact = " | ".join(filter(None, [
+                f"nodes: {', '.join(affected_nodes[:3])}" if affected_nodes else "",
+                f"pipelines: {', '.join(affected_pipes[:3])}" if affected_pipes else "",
+            ]))
             desc = (
                 f"<b>{i}. [{v.get('severity')}] "
                 f"{v.get('check_id', 'unknown')}</b> "
                 f"(Contract: {v.get('contract_id', 'unknown')})<br/>"
-                f"Column: <i>{v.get('column_name', 'N/A')}</i> | "
+                f"Failing field: <i>{v.get('column_name', 'N/A')}</i> | "
                 f"Failing records: {v.get('records_failing', 0)}<br/>"
                 f"Detail: {v.get('message', '')} — "
                 f"Actual: {v.get('actual_value', 'N/A')}, "
-                f"Expected: {v.get('expected', 'N/A')}"
+                f"Expected: {v.get('expected', 'N/A')}<br/>"
+                f"Downstream impact: {impact if impact else 'not available'}"
             )
             story.append(Paragraph(desc, body_small))
             story.append(Spacer(1, 4))
@@ -396,6 +410,10 @@ def build_pdf(output_path):
     actions = []
     # Generate actions from violations
     for v in critical_first[:3]:
+        v_key = (v.get("contract_id"), v.get("check_id"))
+        vlog = violation_map.get(v_key, {})
+        blame = (vlog.get("blame_chain") or [{}])[0]
+        file_path = blame.get("file_path") or "unknown_producer"
         check_id = v.get("check_id", "unknown")
         col = v.get("column_name", "unknown")
         cid = v.get("contract_id", "unknown")
@@ -410,9 +428,8 @@ def build_pdf(output_path):
         actions.append({
             "priority": priority,
             "action": (
-                f"Fix {check_id}: update the producing system "
-                f"to ensure {col} conforms to contract {cid} "
-                f"clause {check_id}. "
+                f"Fix {check_id}: update `{file_path}` so field "
+                f"`{col}` conforms to contract `{cid}` clause `{check_id}`. "
                 f"Currently {v.get('records_failing', 0)} "
                 f"records failing."
             ),

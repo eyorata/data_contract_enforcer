@@ -1,47 +1,47 @@
 {
   "week3-document-refinery-extractions": {
     "extracted_facts[*].confidence": {
-      "mean": 0.9052189989149054,
-      "stddev": 0.06278988512002356,
+      "mean": 0.905219,
+      "stddev": 0.06279,
       "count": 62,
-      "established_at": "2026-04-04T07:27:56Z"
+      "established_at": "2026-04-04T07:43:52Z"
     },
     "processing_time_ms": {
       "mean": 107489.78,
-      "stddev": 70370.78526481957,
+      "stddev": 70370.785265,
       "count": 50,
-      "established_at": "2026-04-04T07:27:56Z"
+      "established_at": "2026-04-04T07:43:52Z"
     }
   },
   "week5-event-sourcing-events": {},
   "week1-intent-classifier-records": {
     "code_refs[*].confidence": {
-      "mean": 0.7999738916256157,
-      "stddev": 0.1100236003401542,
+      "mean": 0.799974,
+      "stddev": 0.110024,
       "count": 203,
-      "established_at": "2026-04-04T07:27:56Z"
+      "established_at": "2026-04-04T07:43:52Z"
     }
   },
   "week4-cartographer-lineage": {
     "node_count": {
-      "mean": 12.0,
+      "mean": 12,
       "stddev": 0.0,
       "count": 7,
-      "established_at": "2026-04-04T07:27:57Z"
+      "established_at": "2026-04-04T07:43:52Z"
     }
   },
   "langsmith-traces": {
     "latency_ms": {
-      "mean": 7320.513333333333,
-      "stddev": 4313.037322987764,
+      "mean": 7320.513333,
+      "stddev": 4313.037323,
       "count": 150,
-      "established_at": "2026-04-04T07:27:57Z"
+      "established_at": "2026-04-04T07:43:52Z"
     },
     "total_tokens": {
-      "mean": 1806.9133333333334,
-      "stddev": 710.2123128693493,
+      "mean": 1806.913333,
+      "stddev": 710.212313,
       "count": 150,
-      "established_at": "2026-04-04T07:27:57Z"
+      "established_at": "2026-04-04T07:43:52Z"
     }
   }
 }
